@@ -1,0 +1,11 @@
+.vscode/
+
+# Environment folder
+portfolio/
+
+# VSCode Code Runner extension
+tempCodeRunnerFile.*
+
+# Cache
+.pytest_cache/
+__pycache__/
