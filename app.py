@@ -1,12 +1,11 @@
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, render_template
 import os
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "57dwad86a465d79"
 
 @app.route('/')
-def hello_world():
-    return 'Hello, World!'
-
+def index():
+    return  render_template('index.html')
 
 @app.route('/favicon.ico')
 def favicon():
