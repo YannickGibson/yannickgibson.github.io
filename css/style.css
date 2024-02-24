@@ -2,7 +2,7 @@
 /* Colors */
 @font-face {
   font-family: 'Segoe UI';
-  src: url("../font/VarelaRound-Regular.ttf");
+  src: url("../fonts/VarelaRound-Regular.ttf");
   font-style: normal;
 }
 
@@ -102,7 +102,7 @@ p {
 
 /* Úvod */
 .name-heading {
-  border-bottom: 6px solid #ffc107;
+  border-bottom: 6px solid #95cf23;
 }
 
 /* Responsive */
