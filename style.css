@@ -1,0 +1,142 @@
+@charset "UTF-8";
+/* Colors */
+@font-face {
+  font-family: 'Segoe UI';
+  src: url("../font/VarelaRound-Regular.ttf");
+  font-style: normal;
+}
+
+html, body {
+  height: 100vh;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Segoe UI !important;
+  color: #000000c7 !important;
+  scroll-behavior: smooth !important;
+}
+
+#particles {
+  height: 100vh;
+  width: 100%;
+  position: fixed;
+  z-index: -100;
+  top: 0;
+  left: 0;
+}
+
+#inside {
+  margin: 0;
+  position: relative;
+  top: 50%;
+  -webkit-transform: translateY(-50%);
+          transform: translateY(-50%);
+}
+
+/* Tools */
+.verticalHorizonCenter {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+}
+
+.center {
+  text-align: center;
+}
+
+.basic-text {
+  font-size: 20px;
+  letter-spacing: 1px;
+  font-family: Segoe UI !important;
+}
+
+.row {
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: 4px !important;
+}
+
+h1 {
+  font-size: 65px !important;
+  color: black !important;
+}
+
+h2 {
+  font-size: 30px !important;
+  font-weight: 600 !important;
+}
+
+h3 {
+  font-weight: 600 !important;
+}
+
+h4 {
+  font-weight: 500 !important;
+}
+
+a {
+  text-decoration: none !important;
+  color: #000000c7 !important;
+}
+
+p {
+  line-height: 38px;
+}
+
+/* Úvod */
+.name-heading {
+  border-bottom: 6px solid #ffc107;
+}
+
+/* Responsive */
+@media only screen and (max-width: 1400px) {
+  .navbar .nav-item .nav-link {
+    margin: 0;
+    margin-left: 10px;
+    border: none;
+  }
+  .navbar .nav-item .nav-link:hover {
+    border: none;
+    color: #ffc107 !important;
+  }
+  .navbar .navbar-collapse {
+    border-left: solid 4px rgba(128, 128, 128, 0.121);
+  }
+  h1 {
+    font-size: 30px !important;
+  }
+  h2 {
+    font-size: 20px !important;
+  }
+  h3 {
+    font-size: 18px !important;
+  }
+  .basic-text {
+    font-size: 15px;
+  }
+  .content {
+    padding-left: 40px !important;
+    padding-right: 40px !important;
+  }
+  .color-div {
+    width: 80%;
+  }
+}
+/*# sourceMappingURL=style.css.map */
