@@ -104,6 +104,18 @@
             font-weight: bold;
             color: #f9a826;
         }
+        #shoot-hint {
+            position: absolute;
+            bottom: 40px;
+            width: 100%;
+            text-align: center;
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            transition: opacity 0.5s ease-out;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -117,6 +129,7 @@
             <h3>Leaderboard</h3>
             <ol id="leaderboard-list"></ol>
         </div>
+        <div id="shoot-hint">Press Space to Shoot</div>
         <div id="game-over">
             <h1>Game Over!</h1>
             <p>Final Length: <span id="final-score"></span></p>
@@ -143,6 +156,7 @@
         let mouse = { x: 0, y: 0, isDown: false };
         let gameActive = false;
         let animationId;
+        let shootCount = 0;
 
         // Configuration
         const BASE_SPEED = 4;
@@ -240,7 +254,7 @@
 
     shoot(targetAngle = this.angle) {
         // Increased minimum length requirement to shoot
-        if (this.ammo > 0 && this.length > 20) {
+        if (this.ammo > 0 && this.length >= 20) {
             projectiles.push(new Projectile(this.x, this.y, targetAngle, this.color, this));
             this.ammo--;
         }
@@ -1152,7 +1166,16 @@
         window.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault(); // prevent scroll
-                if (gameActive) player.shoot(player.angle);
+                if (gameActive) {
+                    let prevAmmo = player.ammo;
+                    player.shoot(player.angle);
+                    if (player.ammo < prevAmmo) {
+                        shootCount++;
+                        if (shootCount >= 3) {
+                            document.getElementById('shoot-hint').style.opacity = '0';
+                        }
+                    }
+                }
             }
         });
 

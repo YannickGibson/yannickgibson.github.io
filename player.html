@@ -79,12 +79,17 @@
         (function () {
             var params = new URLSearchParams(window.location.search);
             var app = params.get('app');
+            var frame = document.getElementById('subapp-frame');
             // Only allow local subapps paths
             if (app && /^subapps\/[\w.\-]+\.html$/.test(app)) {
-                document.getElementById('subapp-frame').src = app;
+                frame.src = app;
                 var name = app.replace(/^subapps\//, '').replace(/\.html$/, '');
                 document.title = 'Yannick Gibson — ' + name.charAt(0).toUpperCase() + name.slice(1);
             }
+            // Auto-focus the iframe once it loads
+            frame.addEventListener('load', function () {
+                frame.focus();
+            });
         })();
     </script>
 </body>

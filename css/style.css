@@ -306,6 +306,24 @@ p {
   margin: 0;
 }
 
+.tile-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.tile-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 12px;
+  color: #00D2FF;
+  background: rgba(0, 210, 255, 0.1);
+  border: 1px solid rgba(0, 210, 255, 0.25);
+  letter-spacing: 0.3px;
+}
+
 .thumb-empty {
   color: rgba(0, 210, 255, 0.3);
   font-size: 28px;

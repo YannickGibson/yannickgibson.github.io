@@ -333,6 +333,14 @@
                 '    </a>' +
                 '  </div>' +
                 '  <p class="tile-desc">' + escapeHtml(project.description) + '</p>' +
+                (project.tags && project.tags.length ?
+                '  <div class="tile-tags">' +
+                    project.tags.slice().sort(function (a, b) {
+                        return a.localeCompare(b);
+                    }).map(function (t) {
+                        return '<span class="tile-tag">' + escapeHtml(t) + '</span>';
+                    }).join('') +
+                '</div>' : '') +
                 '</div>';
 
             tile.addEventListener('click', function (e) {

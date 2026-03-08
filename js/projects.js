@@ -6,7 +6,8 @@ const PROJECTS = [
         description: "First-place winning solution at Hack jak Brno hackathon in 2024 for rapid detection of antibiotic resistance.",
         language: "Python",
         color: "#3572A5",
-        repo: "hackjakbrno"
+        repo: "hackjakbrno",
+        tags: ["Scikit-learn", "PyTorch", "Transformer"]
     },
     {
         title: "RAG-Based Assistant",
@@ -15,28 +16,32 @@ const PROJECTS = [
         color: "#3572A5",
         repo: "HackJakBrno25",
         owner: "ElNiborus",
-        imageIndex: 2
+        imageIndex: 2,
+        tags: ["Semantic Search", "FastAPI", "React.js"]
     },
     {
         title: "Real-Time Tracking",
         description: "Real-time ping-pong ball tracking.",
         language: "Python",
         color: "#3572A5",
-        repo: "bachelors_thesis"
+        repo: "bachelors_thesis",
+        tags: ["PyTorch", "OpenCV", "YOLO"]
     },
     {
         title: "NeuroEvolution",
         description: "Neural networks evolve to navigate roads, avoiding edges.",
         language: "Python",
         color: "#3572A5",
-        repo: "ai_navigation"
+        repo: "ai_navigation",
+        tags: ["Pygame", "NumPy", "NEAT"]
     },
     {
         title: "Satellite Prediction",
         description: "A satellite image prediction solution, winning first place in a competition.",
         language: "Python",
         color: "#3572A5",
-        repo: "unit2025"
+        repo: "unit2025",
+        tags: ["PyTorch", "Streamlit", "U-Net"]
     },
     {
         title: "TimeSeriesKit.jl",
@@ -44,14 +49,16 @@ const PROJECTS = [
         language: "Julia",
         color: "#9558B2",
         repo: "TimeSeriesKit.jl",
-        imageIndex: -1
+        imageIndex: -1,
+        tags: ["Time Series", "ARIMA", "AR/MA"]
     },
 
     {
-        title: "Smasher",
+        title: "Socket-based Game",
         description: "Real-time multiplayer web game.",
         language: "Python",
         color: "#3572A5",
-        repo: "smasher"
+        repo: "smasher",
+        tags: ["Sockets", "Flask",]
     },
 ];
