@@ -2,6 +2,8 @@
 
 Minimal portfolio with dynamic `README.md` loading. Supports subapps like snake game.
 
+Link: https://yannickgibson.github.io/
+
 ## Features
 
 - **Animated Hero:** The landing page features a typewriter effect that cycles through roles and skills, powered by Typed.js.
