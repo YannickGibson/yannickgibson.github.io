@@ -12,6 +12,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
@@ -21,7 +22,8 @@ body {
   color: #D1D5DB !important;
   background: #0F172A;
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 /* ── Particles ─────────────────────────────────────────────────────── */
@@ -636,6 +638,77 @@ p {
 
 .readme-error a {
   color: #00A3CC !important;
+}
+
+/* ── Games Section ─────────────────────────────────────────────────── */
+#games {
+  position: relative;
+  z-index: 1;
+  padding: 80px 0 80px;
+}
+
+#games-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.game-card {
+  display: block;
+  width: 100%;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  text-decoration: none;
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.game-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.game-card-thumb {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+}
+
+.game-card-body {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px 28px;
+}
+
+.game-card-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #F9FAFB;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.game-card-desc {
+  font-size: 14px;
+  color: #9CA3AF;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.game-card-play {
+  font-size: 14px;
+  font-weight: 600;
+  color: #00D2FF;
+  white-space: nowrap;
+  transition: text-shadow 0.3s ease;
+}
+
+.game-card:hover .game-card-play {
+  text-shadow: 0 0 8px rgba(0, 210, 255, 0.6);
 }
 
 /* ── Footer ────────────────────────────────────────────────────────── */

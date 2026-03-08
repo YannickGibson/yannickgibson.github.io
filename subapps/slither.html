@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Slither Game</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #1a1a2e;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: none; /* Prevent scrolling on Android */
+        }
+        canvas {
+            display: block;
+        }
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        #score-board {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        #ammo-board {
+            position: absolute;
+            top: 60px;
+            left: 20px;
+            color: #00bcd4;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        #game-over {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            pointer-events: auto;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+        #game-over h1 {
+            margin-top: 0;
+            font-size: 48px;
+            color: #e94560;
+        }
+        button {
+            background: #0f3460;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #1a5b9c;
+        }
+        #leaderboard {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 8px;
+            min-width: 150px;
+        }
+        #leaderboard h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            text-align: center;
+        }
+        #leaderboard ol {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 14px;
+        }
+        #leaderboard li {
+            margin-bottom: 4px;
+        }
+        .player-rank {
+            font-weight: bold;
+            color: #f9a826;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="ui-layer">
+        <div id="score-board">Length: <span id="score">10</span></div>
+        <div id="ammo-board">Ammo: <span id="ammo">3</span>/3</div>
+        <div id="leaderboard">
+            <h3>Leaderboard</h3>
+            <ol id="leaderboard-list"></ol>
+        </div>
+        <div id="game-over">
+            <h1>Game Over!</h1>
+            <p>Final Length: <span id="final-score"></span></p>
+            <button onclick="startGame()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const gameOverScreen = document.getElementById('game-over');
+        const finalScoreElement = document.getElementById('final-score');
+
+        let width, height;
+        const MAP_SIZE = 3000;
+        
+        // Game State
+        let player;
+        let foods = [];
+        let enemies = [];
+        let projectiles = [];
+        let camera = { x: 0, y: 0 };
+        let mouse = { x: 0, y: 0, isDown: false };
+        let gameActive = false;
+        let animationId;
+
+        // Configuration
+        const BASE_SPEED = 4;
+        const BOOST_SPEED = 8;
+        const FOOD_COUNT = 400;
+        const ENEMY_COUNT = 15;
+        const COLORS = ['#e94560', '#0f3460', '#f9a826', '#4caf50', '#9c27b0', '#00bcd4'];
+        const BOT_NAMES = ['Noodle', 'DangerNoodle', 'Slippy', 'Glider', 'Wormy', 'Cobra', 'Viper', 'Python', 'Mamba', 'Boa', 'Anaconda', 'Slithery', 'String'];
+        
+        const TYPE_COLORS = {
+            'player': '#ffffff',
+            'normal': '#00bcd4',
+            'aggressive': '#e94560',
+            'evasive': '#4caf50',
+            'collector': '#f9a826',
+            'combo': '#9c27b0',
+            'sine': '#ff69b4',
+            'apex': '#ffd700',
+            'shooter': '#ff5722',
+            'op': '#ff0000'
+        };
+
+        const TARGET_COUNTS = {
+            'normal': 2, 'aggressive': 2, 'evasive': 2, 'collector': 2,
+            'combo': 1, 'sine': 3, 'apex': 1, 'shooter': 1, 'op': 1
+        };
+
+        function getSpawnType() {
+            let currentCounts = { 'normal': 0, 'aggressive': 0, 'evasive': 0, 'collector': 0, 'combo': 0, 'sine': 0, 'apex': 0, 'shooter': 0, 'op': 0 };
+            enemies.forEach(e => { if (e && e.aiType) currentCounts[e.aiType]++; });
+            
+            let weightedTypes = [];
+            for (let type in TARGET_COUNTS) {
+                if (type === 'op' && currentCounts['op'] >= 1) continue; // STRICTLY 1 OP
+                let deficit = TARGET_COUNTS[type] - currentCounts[type];
+                let weight = deficit > 0 ? deficit * 10 : 1; // Drastically favor missing types
+                for (let i = 0; i < weight; i++) weightedTypes.push(type);
+            }
+            if (weightedTypes.length === 0) return 'normal';
+            return weightedTypes[Math.floor(Math.random() * weightedTypes.length)];
+        }
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+        window.addEventListener('resize', resize);
+
+        class Snake {
+            constructor(x, y, isPlayer = false) {
+                this.x = x;
+                this.y = y;
+                this.isPlayer = isPlayer;
+                
+                if (isPlayer) {
+                    this.name = 'Yannick';
+                    this.aiType = 'player';
+                } else {
+                    this.aiType = getSpawnType();
+                    let prefix = '[Norm] ';
+                    if (this.aiType === 'aggressive') prefix = '[Aggr] ';
+                    else if (this.aiType === 'evasive') prefix = '[Evdg] ';
+                    else if (this.aiType === 'collector') prefix = '[GC] ';
+                    else if (this.aiType === 'combo') prefix = '[Jack] ';
+                    else if (this.aiType === 'sine') prefix = '[Snke] ';
+                    else if (this.aiType === 'apex') prefix = '[Apex] ';
+                    else if (this.aiType === 'shooter') prefix = '[Shtr] ';
+                    else if (this.aiType === 'op') prefix = '[OP] ';
+                    
+                    this.name = prefix + BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
+                }
+
+                this.segments = [];
+                this.length = isPlayer ? 20 : Math.floor(Math.random() * 20) + 15;
+                this.radius = 12;
+                this.color = TYPE_COLORS[this.aiType] || '#ffffff';
+                this.angle = Math.random() * Math.PI * 2;
+                this.targetAngle = this.angle;
+                this.baseAngle = this.angle; // Used for sine wave bot
+        this.sineOffset = Math.random() * Math.PI * 2;
+        this.maxAmmo = this.aiType === 'shooter' ? 1 : 3;
+        this.ammo = this.maxAmmo;
+        this.reloadTimer = 0;
+        this.reloadRate = 90; // 1.5 seconds per ammo
+        this.speed = BASE_SPEED;
+        this.isBoosting = false;
+        this.energy = 100;
+
+        for (let i = 0; i < this.length; i++) {
+            this.segments.push({ x: this.x, y: this.y });
+        }
+    }
+
+    shoot(targetAngle = this.angle) {
+        // Increased minimum length requirement to shoot
+        if (this.ammo > 0 && this.length > 20) {
+            projectiles.push(new Projectile(this.x, this.y, targetAngle, this.color, this));
+            this.ammo--;
+        }
+    }
+
+    update(targetX, targetY) {
+        // Handle Reloading
+        if (this.ammo < this.maxAmmo && this.aiType !== 'shooter') {
+            this.reloadTimer++;
+            if (this.reloadTimer >= this.reloadRate) {
+                this.ammo++;
+                this.reloadTimer = 0;
+            }
+        }
+        if (this.isPlayer) {
+            document.getElementById('ammo').innerText = this.ammo;
+        }
+
+        // Determine target angle
+        if (this.isPlayer) {
+                    this.targetAngle = Math.atan2(targetY - height / 2, targetX - width / 2);
+                    this.isBoosting = mouse.isDown && this.length > 10;
+                } else {
+                    let closestSnake = null;
+                    let distToClosest = Infinity;
+                    let allSnakes = [player, ...enemies];
+                    
+                    for (let s of allSnakes) {
+                        if (s === this || !s.drawnSegments) continue;
+                        let d = Math.hypot(s.x - this.x, s.y - this.y);
+                        if (d < distToClosest) {
+                            distToClosest = d;
+                            closestSnake = s;
+                        }
+                    }
+
+                    if (this.aiType === 'apex') {
+                        // Advanced Vector-based AI (Artificial Potential Fields)
+                        let avoidX = 0, avoidY = 0;
+                        let huntX = 0, huntY = 0;
+                        let foodX = 0, foodY = 0;
+                        let dangerLevel = 0;
+
+                        // 1. Analyze all snakes for pinpoint avoidance and hunting
+                        for (let s of allSnakes) {
+                            if (s === this || !s.drawnSegments) continue;
+                            
+                            // Build avoidance vector (repelled by all snake segments)
+                            for(let i = 0; i < s.drawnSegments.length; i += 3) { // Check every 3rd for performance
+                                let seg = s.drawnSegments[i];
+                                let dx = this.x - seg.x;
+                                let dy = this.y - seg.y;
+                                let dist = Math.hypot(dx, dy);
+                                
+                                if (dist < 180) { // High awareness radius
+                                    avoidX += (dx / dist) * (180 - dist);
+                                    avoidY += (dy / dist) * (180 - dist);
+                                    dangerLevel += (180 - dist);
+                                }
+                            }
+                            
+                            // Hunting: Target predicted head paths of weaker snakes
+                            let headDist = Math.hypot(this.x - s.x, this.y - s.y);
+                            if (headDist < 350 && this.length > s.length * 0.7) {
+                                let predX = s.x + Math.cos(s.angle) * 100;
+                                let predY = s.y + Math.sin(s.angle) * 100;
+                                huntX += (predX - this.x);
+                                huntY += (predY - this.y);
+                            }
+                        }
+
+                        // 2. Analyze Food
+                        let closestFoodDist = Infinity;
+                        for (let f of foods) {
+                            let d = Math.hypot(this.x - f.x, this.y - f.y);
+                            if (d < 300 && d < closestFoodDist) {
+                                closestFoodDist = d;
+                                foodX = f.x - this.x;
+                                foodY = f.y - this.y;
+                            }
+                        }
+
+                        // 3. Fluid Decision Making
+                        if (dangerLevel > 150) {
+                            // Critical danger: sharp evasion away from mass
+                            this.targetAngle = Math.atan2(avoidY, avoidX);
+                            this.isBoosting = dangerLevel > 300 && this.length > 15; 
+                        } else if (huntX !== 0 || huntY !== 0) {
+                            // Attack safely (blend attack vector with slight avoidance)
+                            this.targetAngle = Math.atan2(huntY + avoidY * 0.3, huntX + avoidX * 0.3);
+                            this.isBoosting = this.length > 15;
+                        } else if (foodX !== 0 || foodY !== 0) {
+                            // Forage safely
+                            this.targetAngle = Math.atan2(foodY + avoidY, foodX + avoidX);
+                            this.isBoosting = closestFoodDist < 100 && this.length > 20 && Math.random() < 0.1;
+                        } else {
+                            // Wander
+                            if (Math.random() < 0.05) this.targetAngle += (Math.random() - 0.5) * Math.PI;
+                            this.isBoosting = false;
+                        }
+                    } else if (this.aiType === 'combo') {
+                        let closestFood = null;
+                        let distToFood = Infinity;
+                        for (let f of foods) {
+                            let d = Math.hypot(f.x - this.x, f.y - this.y);
+                            if (d < distToFood) {
+                                distToFood = d;
+                                closestFood = f;
+                            }
+                        }
+
+                        if (closestSnake && distToClosest < 150) {
+                            // Evade (Survival priority)
+                            this.targetAngle = Math.atan2(this.y - closestSnake.y, this.x - closestSnake.x);
+                            this.isBoosting = this.length > 12;
+                        } else if (closestSnake && distToClosest < 350 && this.length > 15) {
+                            // Aggressive (Hunt nearby snakes)
+                            let predX = closestSnake.x + Math.cos(closestSnake.angle) * 100;
+                            let predY = closestSnake.y + Math.sin(closestSnake.angle) * 100;
+                            this.targetAngle = Math.atan2(predY - this.y, predX - this.x);
+                            this.isBoosting = distToClosest < 200;
+                        } else if (closestFood) {
+                            // Collector (Gather food)
+                            this.targetAngle = Math.atan2(closestFood.y - this.y, closestFood.x - this.x);
+                            this.isBoosting = closestFood.size > 1 && distToFood < 200 && this.length > 15;
+                        } else {
+                            this.isBoosting = false;
+                            if (Math.random() < 0.02) this.targetAngle += (Math.random() - 0.5) * Math.PI;
+                        }
+                    } else if (this.aiType === 'collector') {
+                        // Superior safe foraging AI with path prediction
+                        let avoidX = 0, avoidY = 0;
+                        let foodX = 0, foodY = 0;
+                        let dangerLevel = 0;
+
+                        // 1. Extreme Avoidance & Prediction
+                        for (let s of allSnakes) {
+                            if (s === this || !s.drawnSegments) continue;
+
+                            // Predict head path to avoid getting cut off
+                            let hdx = s.x - this.x;
+                            let hdy = s.y - this.y;
+                            if (Math.hypot(hdx, hdy) < 400) {
+                                let predX = s.x + Math.cos(s.angle) * 150;
+                                let predY = s.y + Math.sin(s.angle) * 150;
+                                let pdx = predX - this.x;
+                                let pdy = predY - this.y;
+                                let pDist = Math.hypot(pdx, pdy);
+                                if (pDist < 250) {
+                                    avoidX -= (pdx / pDist) * (250 - pDist) * 2; 
+                                    avoidY -= (pdy / pDist) * (250 - pDist) * 2;
+                                    dangerLevel += (250 - pDist);
+                                }
+                            }
+
+                            // Avoid body segments safely
+                            for(let i = 0; i < s.drawnSegments.length; i += 4) {
+                                let seg = s.drawnSegments[i];
+                                let dx = this.x - seg.x;
+                                let dy = this.y - seg.y;
+                                let dist = Math.hypot(dx, dy);
+                                if (dist < 200) {
+                                    avoidX += (dx / dist) * (200 - dist);
+                                    avoidY += (dy / dist) * (200 - dist);
+                                    dangerLevel += (200 - dist) * 0.5;
+                                }
+                            }
+                        }
+
+                        // 2. Value-based Food Foraging
+                        let bestFoodScore = -1;
+                        let bestFood = null;
+                        for (let f of foods) {
+                            let dx = f.x - this.x;
+                            let dy = f.y - this.y;
+                            let dist = Math.hypot(dx, dy);
+                            if (dist < 500) {
+                                // High value on big food drops relative to distance
+                                let score = (f.size * 100) / (dist + 1);
+                                if (score > bestFoodScore) {
+                                    bestFoodScore = score;
+                                    bestFood = f;
+                                    foodX = dx;
+                                    foodY = dy;
+                                }
+                            }
+                        }
+
+                        // 3. Smart Movement Logic
+                        if (dangerLevel > 100) {
+                            // Flee immediately into open space
+                            this.targetAngle = Math.atan2(avoidY, avoidX);
+                            this.isBoosting = dangerLevel > 200 && this.length > 15;
+                        } else if (bestFood) {
+                            // Curve smoothly towards best food while avoiding minor threats
+                            this.targetAngle = Math.atan2(foodY + avoidY * 1.5, foodX + avoidX * 1.5);
+                            this.isBoosting = bestFood.size > 1 && bestFoodScore > 0.5 && this.length > 15;
+                        } else {
+                            if (Math.random() < 0.05) this.targetAngle += (Math.random() - 0.5) * Math.PI;
+                            this.isBoosting = false;
+                        }
+                    } else if (this.aiType === 'shooter') {
+                        if (this.length <= 200 || this.ammo <= 0) {
+                            // Focus on surviving and growing if too small or out of ammo
+                            let closestFood = null;
+                            let distToFood = Infinity;
+                            for (let f of foods) {
+                                let d = Math.hypot(f.x - this.x, f.y - this.y);
+                                if (d < distToFood) { distToFood = d; closestFood = f; }
+                            }
+                            if (closestSnake && distToClosest < 250) {
+                                this.targetAngle = Math.atan2(this.y - closestSnake.y, this.x - closestSnake.x);
+                                this.isBoosting = distToClosest < 150 && this.length > 25;
+                            } else if (closestFood) {
+                                this.targetAngle = Math.atan2(closestFood.y - this.y, closestFood.x - this.x);
+                                this.isBoosting = closestFood.size > 1 && distToFood < 200 && this.length > 25;
+                            } else {
+                                if (Math.random() < 0.05) this.targetAngle += (Math.random() - 0.5) * Math.PI;
+                                this.isBoosting = false;
+                            }
+                        } else {
+                            // Sniper mode (Size > 200 & has ammo)
+                            if (closestSnake && distToClosest < 500) {
+                                // Smart prediction based on distance and projectile speed (12)
+                                let timeToHit = distToClosest / 12; 
+                                let predX = closestSnake.x + Math.cos(closestSnake.angle) * (BASE_SPEED * timeToHit);
+                                let predY = closestSnake.y + Math.sin(closestSnake.angle) * (BASE_SPEED * timeToHit);
+                                let aimAngle = Math.atan2(predY - this.y, predX - this.x);
+                                
+                                this.targetAngle = aimAngle;
+                                
+                                // Only shoot if accurately lined up
+                                let angleDiff = Math.abs(this.angle - aimAngle);
+                                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                                
+                                if (distToClosest < 350 && Math.abs(angleDiff) < 0.1) {
+                                    this.shoot(this.targetAngle);
+                                }
+                                
+                                // Maintain sniping distance
+                                this.isBoosting = distToClosest < 200;
+                            } else {
+                                if (Math.random() < 0.02) this.targetAngle += (Math.random() - 0.5) * Math.PI;
+                                this.isBoosting = false;
+                            }
+                        }
+                    } else if (this.aiType === 'op') {
+                        // God-tier Smooth Predictive AI (Whisker/Feeler Algorithm)
+                        let desiredAngle = this.angle;
+                        let foundTarget = false;
+
+                        // 1. Find optimal target (Hunt closest head, or big food)
+                        let closestPreyDist = Infinity;
+                        let targetPrey = null;
+                        for (let s of allSnakes) {
+                            if (s === this || !s.drawnSegments) continue;
+                            let headDist = Math.hypot(this.x - s.x, this.y - s.y);
+                            if (headDist < 800 && headDist < closestPreyDist) {
+                                closestPreyDist = headDist;
+                                targetPrey = s;
+                            }
+                        }
+
+                        if (targetPrey) {
+                            let predX = targetPrey.x + Math.cos(targetPrey.angle) * 150;
+                            let predY = targetPrey.y + Math.sin(targetPrey.angle) * 150;
+                            desiredAngle = Math.atan2(predY - this.y, predX - this.x);
+                            foundTarget = true;
+                        } else {
+                            // Find food
+                            let bestFoodScore = -1;
+                            for (let f of foods) {
+                                let dist = Math.hypot(f.x - this.x, f.y - this.y);
+                                if (dist < 800) {
+                                    let score = (f.size * 500) / (dist + 1);
+                                    if (score > bestFoodScore) {
+                                        bestFoodScore = score;
+                                        desiredAngle = Math.atan2(f.y - this.y, f.x - this.x);
+                                        foundTarget = true;
+                                    }
+                                }
+                            }
+                        }
+
+                        // 2. Evaluate 7 steering paths (-70 deg to +70 deg)
+                        let angles = [-1.2, -0.8, -0.4, 0, 0.4, 0.8, 1.2]; 
+                        let dangerScores = [0, 0, 0, 0, 0, 0, 0];
+                        let dangerThreshold = 400; // How far ahead OP looks
+
+                        // Check map bounds
+                        for (let j = 0; j < angles.length; j++) {
+                            let absAngle = this.angle + angles[j];
+                            let projX = this.x + Math.cos(absAngle) * dangerThreshold;
+                            let projY = this.y + Math.sin(absAngle) * dangerThreshold;
+                            if (projX < 50 || projX > MAP_SIZE - 50 || projY < 50 || projY > MAP_SIZE - 50) {
+                                dangerScores[j] += 2000; // Massive penalty for walls
+                            }
+                        }
+
+                        // Check snake segments
+                        for (let s of allSnakes) {
+                            if (s === this || !s.drawnSegments) continue;
+                            for (let i = 0; i < s.drawnSegments.length; i += 2) {
+                                let seg = s.drawnSegments[i];
+                                let dx = seg.x - this.x;
+                                let dy = seg.y - this.y;
+                                let dist = Math.hypot(dx, dy);
+                                
+                                if (dist < dangerThreshold) {
+                                    let angleToSeg = Math.atan2(dy, dx);
+                                    let relativeAngle = angleToSeg - this.angle;
+                                    while (relativeAngle > Math.PI) relativeAngle -= Math.PI * 2;
+                                    while (relativeAngle < -Math.PI) relativeAngle += Math.PI * 2;
+
+                                    // If segment is generally in front of OP
+                                    if (Math.abs(relativeAngle) < Math.PI / 1.5) {
+                                        let dangerPower = Math.pow((dangerThreshold - dist) / 40, 2); 
+                                        
+                                        // Spread danger across the whiskers
+                                        for (let j = 0; j < angles.length; j++) {
+                                            let angleDiff = Math.abs(angles[j] - relativeAngle);
+                                            if (angleDiff < 0.8) { 
+                                                dangerScores[j] += dangerPower * (0.8 - angleDiff);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // 3. Pick the safest angle that aligns best with the goal
+                        let bestAngleIdx = 3;
+                        let minTotalCost = Infinity;
+
+                        for (let j = 0; j < angles.length; j++) {
+                            let absAngle = this.angle + angles[j];
+                            let diffToDesired = Math.abs(absAngle - desiredAngle);
+                            while (diffToDesired > Math.PI) diffToDesired -= Math.PI * 2;
+                            
+                            // Cost prioritizes survival heavily, then sticking to the target
+                            let cost = dangerScores[j] + (Math.abs(diffToDesired) * 40);
+
+                            if (cost < minTotalCost) {
+                                minTotalCost = cost;
+                                bestAngleIdx = j;
+                            }
+                        }
+
+                        this.targetAngle = this.angle + angles[bestAngleIdx];
+
+                        // Smart Boosting: Boost if the path directly ahead is safe
+                        this.isBoosting = dangerScores[3] < 15 && foundTarget && this.length > 25;
+
+                    } else if (this.aiType === 'sine') {
+                        // OP Buff: Move forward but violently oscillate side-to-side
+                        this.sineOffset += 0.25; // Much faster wave speed
+                        
+                        // Erratically change direction
+                        if (Math.random() < 0.05) {
+                            this.baseAngle += (Math.random() - 0.5) * Math.PI;
+                        }
+                        
+                        // Calculate target angle using wider sine wave
+                        this.targetAngle = this.baseAngle + Math.sin(this.sineOffset) * 2.5; // OP wave amplitude
+                        this.isBoosting = Math.random() < 0.05 && this.length > 15; // Unpredictable bursts of speed
+                    } else if (this.aiType === 'aggressive' && closestSnake) {
+                        if (distToClosest < 400) {
+                            // Aim in front of the closest snake to cut them off
+                            let predX = closestSnake.x + Math.cos(closestSnake.angle) * 100;
+                            let predY = closestSnake.y + Math.sin(closestSnake.angle) * 100;
+                            this.targetAngle = Math.atan2(predY - this.y, predX - this.x);
+                            this.isBoosting = distToClosest < 250 && this.length > 12;
+                        } else {
+                            this.isBoosting = false;
+                            if (Math.random() < 0.02) this.targetAngle += (Math.random() - 0.5) * Math.PI;
+                        }
+                    } else if (this.aiType === 'evasive' && closestSnake) {
+                        if (distToClosest < 300) {
+                            // Turn away from closest snake
+                            this.targetAngle = Math.atan2(this.y - closestSnake.y, this.x - closestSnake.x);
+                            this.isBoosting = distToClosest < 150 && this.length > 12;
+                        } else {
+                            this.isBoosting = false;
+                            if (Math.random() < 0.02) this.targetAngle += (Math.random() - 0.5) * Math.PI;
+                        }
+                    } else {
+                        // Normal AI
+                        this.isBoosting = false;
+                        if (Math.random() < 0.02) {
+                            this.targetAngle += (Math.random() - 0.5) * Math.PI;
+                        }
+                    }
+
+                    // Keep AI inside bounds
+                    if (this.x < 100 || this.x > MAP_SIZE - 100 || this.y < 100 || this.y > MAP_SIZE - 100) {
+                        this.targetAngle = Math.atan2(MAP_SIZE/2 - this.y, MAP_SIZE/2 - this.x);
+                        this.baseAngle = this.targetAngle; // Reset base angle for sine bot so it doesn't get stuck
+                        this.isBoosting = false;
+                    }
+
+                    // Enforce stamina limits on AI so they chill a bit
+                    if (this.aiType !== 'op') {
+                        if (this.energy < 30) {
+                            this.isBoosting = false; // Override AI decision if too tired
+                        }
+                        if (this.isBoosting) {
+                            this.energy -= 1.5; // Drain stamina
+                        } else {
+                            this.energy = Math.min(100, this.energy + 0.6); // Regen stamina
+                        }
+                    } else {
+                        // The OP bot never gets tired
+                        this.energy = 100;
+                    }
+                }
+
+                // Smooth rotation
+                let diff = this.targetAngle - this.angle;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                
+                // Reduced OP turn speed from 0.4 to 0.25 so he slithers smoothly without jittering
+                this.angle += diff * (this.aiType === 'op' ? 0.25 : 0.1); 
+
+                // Apply Speed
+                let currentSpeed = this.aiType === 'sine' ? this.speed * 1.5 : this.speed;
+                if (this.aiType === 'op') currentSpeed = this.speed * 1.25; // Base speed buff for OP
+                
+                if (this.isBoosting) {
+                    currentSpeed = BOOST_SPEED + (this.aiType === 'op' ? 2 : 0); // OP boosts even faster
+                    if (this.aiType !== 'op' && Math.random() < 0.2) { // OP never loses length while boosting
+                        this.length = Math.max(20, this.length - 1); // Increased minimum size
+                        this.segments.pop();
+                        // Drop food behind
+                        let tail = this.segments[this.segments.length - 1];
+                        if (tail) foods.push(new Food(tail.x, tail.y, this.color, 2));
+                        if(this.isPlayer) scoreElement.innerText = this.length;
+                    }
+                }
+
+                this.x += Math.cos(this.angle) * currentSpeed;
+                this.y += Math.sin(this.angle) * currentSpeed;
+
+                // Boundary collision
+                this.x = Math.max(this.radius, Math.min(MAP_SIZE - this.radius, this.x));
+                this.y = Math.max(this.radius, Math.min(MAP_SIZE - this.radius, this.y));
+
+                // Update segments (Kinematic follow)
+                this.segments.unshift({ x: this.x, y: this.y });
+                
+                // --- SLITHER.IO CONSTRICTION MECHANIC ---
+                // Smoothly pull historical path segments inward to tighten loops around prey
+                let constrictFactor = this.isBoosting ? 0.015 : 0.005;
+                for (let i = 15; i < this.segments.length; i++) {
+                    let ahead = this.segments[i - 15]; // Look 15 path points ahead
+                    if (ahead) {
+                        this.segments[i].x += (ahead.x - this.segments[i].x) * constrictFactor;
+                        this.segments[i].y += (ahead.y - this.segments[i].y) * constrictFactor;
+                    }
+                }
+                // ----------------------------------------
+                
+                // Keep segment count matching length, plus smooth spacing
+                let path = this.segments;
+                let drawnSegments = [];
+                drawnSegments.push({x: this.x, y: this.y});
+                
+                let targetDist = this.radius * 0.8;
+                let pathIndex = 1;
+                
+                for(let i = 1; i < this.length; i++) {
+                    let prev = drawnSegments[i-1];
+                    let curr = path[pathIndex];
+                    let dist = 0, dx = 0, dy = 0;
+                    
+                    // Find the next path point that is far enough away to maintain distance
+                    while (curr) {
+                        dx = prev.x - curr.x;
+                        dy = prev.y - curr.y;
+                        dist = Math.sqrt(dx*dx + dy*dy);
+                        if (dist >= targetDist) break;
+                        pathIndex++;
+                        curr = path[pathIndex];
+                    }
+                    
+                    if (curr && dist > 0) {
+                        // Interpolate exact distance
+                        drawnSegments.push({
+                            x: prev.x - (dx/dist)*targetDist,
+                            y: prev.y - (dy/dist)*targetDist
+                        });
+                    } else {
+                        // Fallback if we run out of path history
+                        curr = path[path.length - 1] || prev;
+                        drawnSegments.push({x: curr.x, y: curr.y});
+                    }
+                }
+                
+                // Trim path memory (increased capacity to prevent tail from disappearing during tight coils)
+                if (this.segments.length > this.length * 8) {
+                    this.segments.length = this.length * 8;
+                }
+                this.drawnSegments = drawnSegments;
+            }
+
+            draw(ctx) {
+                if(!this.drawnSegments) return;
+
+                // Draw segments from tail to head
+                for (let i = this.drawnSegments.length - 1; i >= 0; i--) {
+                    let seg = this.drawnSegments[i];
+                    ctx.beginPath();
+                    
+                    // Keep the tail much thicker and chunkier
+                    let currentRadius = Math.max(7, this.radius - (i * 0.03));
+                    ctx.arc(seg.x, seg.y, currentRadius, 0, Math.PI * 2);
+                    
+                    ctx.fillStyle = this.color;
+                    
+                    if (i === 0) {
+                        // Head
+                        ctx.shadowBlur = 10;
+                        ctx.shadowColor = this.color;
+                    } else {
+                        ctx.shadowBlur = 0;
+                        // Alternate shading for segments
+                        if (i % 2 === 0) ctx.fillStyle = adjustColor(this.color, -20);
+                    }
+                    
+                    ctx.fill();
+                    ctx.closePath();
+
+                    // Eyes
+                    if (i === 0) {
+                        ctx.shadowBlur = 0;
+                        ctx.fillStyle = 'white';
+                        let eyeOffsetX = Math.cos(this.angle + Math.PI/2) * 5;
+                        let eyeOffsetY = Math.sin(this.angle + Math.PI/2) * 5;
+                        let eyeDirX = Math.cos(this.angle) * 4;
+                        let eyeDirY = Math.sin(this.angle) * 4;
+
+                        // Left eye
+                        ctx.beginPath(); ctx.arc(seg.x + eyeOffsetX + eyeDirX, seg.y + eyeOffsetY + eyeDirY, 4, 0, Math.PI*2); ctx.fill();
+                        // Right eye
+                        ctx.beginPath(); ctx.arc(seg.x - eyeOffsetX + eyeDirX, seg.y - eyeOffsetY + eyeDirY, 4, 0, Math.PI*2); ctx.fill();
+                        
+                        ctx.fillStyle = 'black';
+                        ctx.beginPath(); ctx.arc(seg.x + eyeOffsetX + eyeDirX*1.5, seg.y + eyeOffsetY + eyeDirY*1.5, 2, 0, Math.PI*2); ctx.fill();
+                        ctx.beginPath(); ctx.arc(seg.x - eyeOffsetX + eyeDirX*1.5, seg.y - eyeOffsetY + eyeDirY*1.5, 2, 0, Math.PI*2); ctx.fill();
+
+                        // Floating Name Tag
+                        ctx.font = 'bold 12px "Segoe UI"';
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(this.name, seg.x, seg.y - this.radius - 12);
+                    }
+                }
+            }
+
+            die() {
+                // Spawn food where segments were
+                if(this.drawnSegments) {
+                    for(let i=0; i<this.drawnSegments.length; i+=2) {
+                        foods.push(new Food(this.drawnSegments[i].x, this.drawnSegments[i].y, this.color, 3));
+                    }
+                }
+            }
+        }
+
+        class Projectile {
+            constructor(x, y, angle, color, owner) {
+                this.x = x;
+                this.y = y;
+                this.vx = Math.cos(angle) * 12;
+                this.vy = Math.sin(angle) * 12;
+                this.color = color;
+                this.owner = owner;
+                this.life = 100;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life--;
+            }
+            draw(ctx) {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 6, 0, Math.PI * 2);
+                ctx.fillStyle = '#fff';
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.color;
+                ctx.fill();
+                ctx.closePath();
+                
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 4, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.closePath();
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        class Food {
+            constructor(x, y, color = null, size = 1) {
+                this.x = x || Math.random() * MAP_SIZE;
+                this.y = y || Math.random() * MAP_SIZE;
+                this.color = color || COLORS[Math.floor(Math.random() * COLORS.length)];
+                this.size = size; // 1 = normal, larger = dropped by dead snakes
+                this.radius = 4 * size;
+                this.wobble = Math.random() * Math.PI * 2;
+                this.createdAt = Date.now();
+                this.expires = size > 1; // Only dropped food expires
+            }
+            draw(ctx) {
+                this.wobble += 0.1;
+                let currentRadius = this.radius + Math.sin(this.wobble) * 1;
+                
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, currentRadius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 10 * this.size;
+                ctx.shadowColor = this.color;
+                ctx.fill();
+                ctx.closePath();
+                ctx.shadowBlur = 0; // reset
+            }
+        }
+
+        function adjustColor(color, amount) {
+            return '#' + color.replace(/^#/, '').replace(/../g, color => ('0'+Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
+        }
+
+        function getSafeSpawnPos(isBot = true) {
+            let x, y, safe;
+            let attempts = 0;
+            do {
+                x = Math.random() * MAP_SIZE;
+                y = Math.random() * MAP_SIZE;
+                safe = true;
+                
+                if (isBot && typeof player !== 'undefined' && player) {
+                    if (Math.hypot(x - player.x, y - player.y) < 1000) safe = false; // Stay far from player
+                } else if (!isBot && typeof enemies !== 'undefined') {
+                    for (let e of enemies) {
+                        if (e && Math.hypot(x - e.x, y - e.y) < 800) { // Player spawns safely away from bots
+                            safe = false;
+                            break;
+                        }
+                    }
+                }
+                attempts++;
+            } while (!safe && attempts < 50);
+            return { x, y };
+        }
+
+        function spawnFood(count) {
+            for(let i=0; i<count; i++) foods.push(new Food());
+        }
+
+        function spawnEnemies(count) {
+            for(let i=0; i<count; i++) {
+                let pos = getSafeSpawnPos(true);
+                enemies.push(new Snake(pos.x, pos.y));
+            }
+        }
+
+        function startGame() {
+            resize();
+            player = new Snake(MAP_SIZE/2, MAP_SIZE/2, true);
+            foods = [];
+            enemies = [];
+            projectiles = [];
+            spawnFood(FOOD_COUNT);
+            spawnEnemies(ENEMY_COUNT);
+            
+            scoreElement.innerText = player.length;
+            gameOverScreen.style.display = 'none';
+            gameActive = true;
+            
+            if(animationId) cancelAnimationFrame(animationId);
+            gameLoop();
+        }
+
+        function endGame() {
+            gameActive = false;
+            finalScoreElement.innerText = player.length;
+            gameOverScreen.style.display = 'block';
+        }
+
+        function checkCollisions() {
+            let allSnakes = [player, ...enemies].filter(s => s && s.drawnSegments);
+
+            // Projectile hits
+            for (let p = projectiles.length - 1; p >= 0; p--) {
+                let proj = projectiles[p];
+                let hit = false;
+                
+                for (let s of allSnakes) {
+                    if (s === proj.owner || !s.drawnSegments) continue;
+                    
+                    for (let i = 0; i < s.drawnSegments.length; i++) {
+                        let seg = s.drawnSegments[i];
+                        let dx = proj.x - seg.x;
+                        let dy = proj.y - seg.y;
+                        
+                        if (dx*dx + dy*dy < s.radius * s.radius) {
+                            hit = true;
+                            // Snap the snake!
+                            if (i < 10 || s.length < 25) {
+                                // Hit near head or too small: kill completely
+                                s.die();
+                                if (s.isPlayer) {
+                                    let pos = getSafeSpawnPos(false);
+                                    player = new Snake(pos.x, pos.y, true);
+                                    scoreElement.innerText = player.length;
+                                } else {
+                                    let idx = enemies.indexOf(s);
+                                    if(idx > -1) { enemies.splice(idx, 1); spawnEnemies(1); }
+                                }
+                            } else {
+                                // Cut in half at index i
+                                let severed = s.drawnSegments.slice(i);
+                                s.length = i;
+                                s.segments = s.segments.slice(0, i);
+                                s.drawnSegments = s.drawnSegments.slice(0, i);
+                                if (s.isPlayer) scoreElement.innerText = s.length;
+                                
+                                // Drop food for severed tail
+                                for (let j = 0; j < severed.length; j += 2) {
+                                    foods.push(new Food(severed[j].x, severed[j].y, s.color, 2));
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    if (hit) break;
+                }
+                if (hit) projectiles.splice(p, 1);
+            }
+
+            // All snakes eating food
+            allSnakes = [player, ...enemies].filter(s => s && s.drawnSegments); // Re-filter in case a projectile killed someone
+            allSnakes.forEach(snake => {
+                for (let i = foods.length - 1; i >= 0; i--) {
+                    let f = foods[i];
+                    let dx = snake.x - f.x;
+                    let dy = snake.y - f.y;
+                    if (dx*dx + dy*dy < (snake.radius + f.radius) * (snake.radius + f.radius)) {
+                        snake.length += f.size;
+                        if(snake.isPlayer) scoreElement.innerText = snake.length;
+                        foods.splice(i, 1);
+                        if(foods.length < FOOD_COUNT) foods.push(new Food()); // replenish
+                    }
+                }
+            });
+
+            // Snake hitting other snakes
+            for (let i = allSnakes.length - 1; i >= 0; i--) {
+                let snake = allSnakes[i];
+                let crashed = false;
+                let killerSnake = null;
+                
+                for (let j = 0; j < allSnakes.length; j++) {
+                    if (i === j) continue; // Don't hit yourself
+                    let otherSnake = allSnakes[j];
+                    
+                    // Check if snake's head hits any segment of otherSnake
+                    for (let seg of otherSnake.drawnSegments) {
+                        let dx = snake.x - seg.x;
+                        let dy = snake.y - seg.y;
+                        if (dx*dx + dy*dy < snake.radius * snake.radius) {
+                            crashed = true;
+                            killerSnake = otherSnake;
+                            break;
+                        }
+                    }
+                    if (crashed) break;
+                }
+                
+                if (crashed) {
+                    snake.die();
+                    if (snake.isPlayer) {
+                        // Instant respawn in the current game without resetting
+                        let pos = getSafeSpawnPos(false);
+                        player = new Snake(pos.x, pos.y, true);
+                        scoreElement.innerText = player.length;
+                        return; // Stop checking if player dies this frame
+                    } else {
+                        let idx = enemies.indexOf(snake);
+                        if(idx > -1) {
+                            enemies.splice(idx, 1);
+                            spawnEnemies(1); // Respawn bot
+                        }
+                    }
+                }
+            }
+        }
+
+        function drawBackground() {
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(camera.x, camera.y, width, height);
+
+            ctx.strokeStyle = '#22223b';
+            ctx.lineWidth = 1;
+            const gridSize = 50;
+            
+            let startX = Math.floor(camera.x / gridSize) * gridSize;
+            let startY = Math.floor(camera.y / gridSize) * gridSize;
+
+            ctx.beginPath();
+            for (let x = startX; x < camera.x + width; x += gridSize) {
+                ctx.moveTo(x, camera.y);
+                ctx.lineTo(x, camera.y + height);
+            }
+            for (let y = startY; y < camera.y + height; y += gridSize) {
+                ctx.moveTo(camera.x, y);
+                ctx.lineTo(camera.x + width, y);
+            }
+            ctx.stroke();
+
+            // Draw map borders
+            ctx.strokeStyle = '#e94560';
+            ctx.lineWidth = 5;
+            ctx.strokeRect(0, 0, MAP_SIZE, MAP_SIZE);
+        }
+
+        function updateLeaderboard() {
+            const leaderboardList = document.getElementById('leaderboard-list');
+            let allSnakes = [player, ...enemies].filter(s => s && s.drawnSegments);
+            allSnakes.sort((a, b) => b.length - a.length);
+            
+            let html = '';
+            for(let i = 0; i < Math.min(10, allSnakes.length); i++) {
+                let snake = allSnakes[i];
+                let cssClass = snake.isPlayer ? 'class="player-rank"' : '';
+                html += `<li ${cssClass}>${snake.name} - ${snake.length}</li>`;
+            }
+            leaderboardList.innerHTML = html;
+        }
+
+        function gameLoop() {
+            if (!gameActive) return;
+
+            // Camera follow
+            camera.x = player.x - width / 2;
+            camera.y = player.y - height / 2;
+
+            ctx.save();
+            ctx.translate(-camera.x, -camera.y);
+
+            drawBackground();
+
+            // Cleanup projectiles and expired food
+            projectiles = projectiles.filter(p => p.life > 0);
+            
+            let now = Date.now();
+            foods = foods.filter(f => !(f.expires && now - f.createdAt > 30000));
+            while (foods.length < FOOD_COUNT) foods.push(new Food());
+
+            // Update & Draw
+            foods.forEach(f => f.draw(ctx));
+            
+            projectiles.forEach(p => {
+                p.update();
+                p.draw(ctx);
+            });
+            
+            enemies.forEach(enemy => {
+                enemy.update(0,0);
+                enemy.draw(ctx);
+            });
+
+            player.update(mouse.x, mouse.y);
+            player.draw(ctx);
+
+            checkCollisions();
+            
+            updateLeaderboard();
+
+            ctx.restore();
+
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        // Input Listeners
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+        window.addEventListener('mousedown', () => mouse.isDown = true);
+        window.addEventListener('mouseup', () => mouse.isDown = false);
+
+        // Touch support for Android/mobile
+        window.addEventListener('touchstart', (e) => {
+            mouse.x = e.touches[0].clientX;
+            mouse.y = e.touches[0].clientY;
+            mouse.isDown = true;
+        }, {passive: false});
+        
+        window.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // prevent scroll
+            mouse.x = e.touches[0].clientX;
+            mouse.y = e.touches[0].clientY;
+        }, {passive: false});
+        
+        window.addEventListener('touchend', () => mouse.isDown = false);
+
+        // Keyboard support for shooting
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault(); // prevent scroll
+                if (gameActive) player.shoot(player.angle);
+            }
+        });
+
+        // Init
+        startGame();
+
+    </script>
+</body>
+</html>

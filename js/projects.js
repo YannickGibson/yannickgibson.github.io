@@ -2,21 +2,23 @@ const GITHUB_USER = "YannickGibson";
 
 const PROJECTS = [
     {
-        title: "Antibiotic Resistance",
+        title: "Resistance Detection",
         description: "First-place winning solution at Hack jak Brno hackathon in 2024 for rapid detection of antibiotic resistance.",
         language: "Python",
         color: "#3572A5",
         repo: "hackjakbrno"
     },
     {
-        title: "Satellite Prediction",
-        description: "A satellite image prediction solution, winning first place in a competition.",
+        title: "RAG-Based Assistant",
+        description: "Winning solution of RAG-based chat assistant built at HackJakBrno 2025.",
         language: "Python",
         color: "#3572A5",
-        repo: "unit2025"
+        repo: "HackJakBrno25",
+        owner: "ElNiborus",
+        imageIndex: 2
     },
     {
-        title: "Realtime Detection",
+        title: "Real-Time Tracking",
         description: "Real-time ping-pong ball tracking.",
         language: "Python",
         color: "#3572A5",
@@ -30,11 +32,11 @@ const PROJECTS = [
         repo: "ai_navigation"
     },
     {
-        title: "Smasher",
-        description: "Real-time multiplayer web game.",
+        title: "Satellite Prediction",
+        description: "A satellite image prediction solution, winning first place in a competition.",
         language: "Python",
         color: "#3572A5",
-        repo: "smasher"
+        repo: "unit2025"
     },
     {
         title: "TimeSeriesKit.jl",
@@ -44,12 +46,12 @@ const PROJECTS = [
         repo: "TimeSeriesKit.jl",
         imageIndex: -1
     },
+
     {
-        title: "Rag Chat Assistent",
-        description: "RAG-based chat assistant built at HackJakBrno 2025.",
+        title: "Smasher",
+        description: "Real-time multiplayer web game.",
         language: "Python",
         color: "#3572A5",
-        repo: "HackJakBrno25",
-        owner: "ElNiborus"
-    }
+        repo: "smasher"
+    },
 ];
