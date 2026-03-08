@@ -13,6 +13,7 @@
 html {
   scroll-behavior: smooth;
   overflow-x: clip;
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -24,6 +25,31 @@ body {
   min-height: 100vh;
   overflow-x: clip;
   max-width: 100%;
+}
+
+/* ── Global Scrollbar ──────────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 210, 255, 0.38) rgba(15, 23, 42, 0.12);
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.12);
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  border: 2px solid rgba(15, 23, 42, 0.55);
+  background: linear-gradient(180deg, rgba(0, 210, 255, 0.5), rgba(0, 163, 204, 0.5));
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(0, 210, 255, 0.7), rgba(0, 163, 204, 0.7));
 }
 
 /* ── Particles ─────────────────────────────────────────────────────── */
@@ -55,35 +81,47 @@ body {
   transition: opacity 0.3s ease;
 }
 
-/* ── Navbar ────────────────────────────────────────────────────────── */
-.glass-nav {
-  background: rgba(15, 23, 42, 0.45) !important;
+/* ── Floating Pill Nav ──────────────────────────────────────────────── */
+.pill-nav {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(15, 23, 42, 0.55);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
 }
 
-.glass-nav .navbar-brand {
-  font-size: 24px;
-  font-weight: 800;
-  color: #00B8E6 !important;
-  letter-spacing: 2px;
-}
-
-.glass-nav .nav-link {
+.pill-nav a {
   color: #9CA3AF !important;
+  font-size: 14px;
   font-weight: 500;
-  font-size: 18px;
-  letter-spacing: 1px;
-  transition: color 0.3s ease, text-shadow 0.3s ease;
-  margin-left: 8px;
+  letter-spacing: 0.5px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  text-decoration: none !important;
+  transition: color 0.25s ease, background 0.25s ease;
+  white-space: nowrap;
 }
 
-.glass-nav .nav-link:hover {
-  color: #00D2FF !important;
-  text-shadow: 0 0 8px rgba(0, 210, 255, 0.6), 0 0 20px rgba(0, 210, 255, 0.25);
+.pill-nav a:hover {
+  color: #F9FAFB !important;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.pill-nav-divider {
+  width: 1px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.12);
+  margin: 0 4px;
 }
 
 /* ── Hero Section ──────────────────────────────────────────────────── */
@@ -668,7 +706,11 @@ p {
 #games-grid {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 28px;
+}
+
+#games-grid > .game-card:first-child {
+  margin-top: 18px;
 }
 
 .game-card {
@@ -758,8 +800,8 @@ footer p {
 /* ── Scroll animation helpers ──────────────────────────────────────── */
 .animate-on-scroll {
   opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.1s, transform 0.1s;
+  transform: translateY(14px);
+  transition: opacity 0.18s, transform 0.18s cubic-bezier(0.4,0.2,0.2,1);
 }
 
 .animate-on-scroll.animate__animated {
@@ -796,6 +838,21 @@ footer p {
 }
 
 @media (max-width: 576px) {
+  .pill-nav {
+    top: 12px;
+    gap: 2px;
+    padding: 5px 6px;
+  }
+
+  .pill-nav a {
+    font-size: 12px;
+    padding: 5px 8px;
+  }
+
+  .pill-nav-divider {
+    margin: 0 2px;
+  }
+
   h1 {
     font-size: 28px !important;
   }

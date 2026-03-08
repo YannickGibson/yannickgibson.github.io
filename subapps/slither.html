@@ -116,6 +116,32 @@
             transition: opacity 0.5s ease-out;
             pointer-events: none;
         }
+
+        /* Mobile specific adjustments */
+        @media (max-width: 768px) {
+            #ammo-board, #shoot-hint {
+                display: none !important;
+            }
+            #score-board {
+                font-size: 18px;
+                top: 10px;
+                left: 10px;
+            }
+            #leaderboard {
+                min-width: 100px;
+                padding: 5px 10px;
+                top: 10px;
+                right: 10px;
+            }
+            #leaderboard h3 {
+                font-size: 14px;
+                margin-bottom: 5px;
+            }
+            #leaderboard ol {
+                padding-left: 15px;
+                font-size: 11px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -152,7 +178,7 @@
         let foods = [];
         let enemies = [];
         let projectiles = [];
-        let camera = { x: 0, y: 0 };
+        let camera = { x: 0, y: 0, zoom: 1 };
         let mouse = { x: 0, y: 0, isDown: false };
         let gameActive = false;
         let animationId;
@@ -204,6 +230,8 @@
             height = window.innerHeight;
             canvas.width = width;
             canvas.height = height;
+            // Zoom out on mobile devices
+            camera.zoom = width < 768 ? 0.6 : 1.0;
         }
         window.addEventListener('resize', resize);
 
@@ -1055,7 +1083,7 @@
 
         function drawBackground() {
             ctx.fillStyle = '#1a1a2e';
-            ctx.fillRect(camera.x, camera.y, width, height);
+            ctx.fillRect(camera.x, camera.y, width / camera.zoom, height / camera.zoom);
 
             ctx.strokeStyle = '#22223b';
             ctx.lineWidth = 1;
@@ -1065,13 +1093,13 @@
             let startY = Math.floor(camera.y / gridSize) * gridSize;
 
             ctx.beginPath();
-            for (let x = startX; x < camera.x + width; x += gridSize) {
+            for (let x = startX; x < camera.x + width / camera.zoom; x += gridSize) {
                 ctx.moveTo(x, camera.y);
-                ctx.lineTo(x, camera.y + height);
+                ctx.lineTo(x, camera.y + height / camera.zoom);
             }
-            for (let y = startY; y < camera.y + height; y += gridSize) {
+            for (let y = startY; y < camera.y + height / camera.zoom; y += gridSize) {
                 ctx.moveTo(camera.x, y);
-                ctx.lineTo(camera.x + width, y);
+                ctx.lineTo(camera.x + width / camera.zoom, y);
             }
             ctx.stroke();
 
@@ -1098,11 +1126,12 @@
         function gameLoop() {
             if (!gameActive) return;
 
-            // Camera follow
-            camera.x = player.x - width / 2;
-            camera.y = player.y - height / 2;
+            // Camera follow with zoom
+            camera.x = player.x - (width / 2) / camera.zoom;
+            camera.y = player.y - (height / 2) / camera.zoom;
 
             ctx.save();
+            ctx.scale(camera.zoom, camera.zoom);
             ctx.translate(-camera.x, -camera.y);
 
             drawBackground();

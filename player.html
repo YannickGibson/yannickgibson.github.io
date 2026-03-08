@@ -10,7 +10,7 @@
     <!-- Site styles (shared background, navbar, etc.) -->
     <link rel="stylesheet" href="css/style.css">
     <link rel="icon" href="assets/icons/favicon.ico">
-    <title>Yannick Gibson — Player</title>
+    <title>Yannick Daniel Gibson — Player</title>
     <style>
         .player-wrapper {
             position: relative;
@@ -43,26 +43,18 @@
     <div id="vignette"></div>
     <div id="cursor-spotlight"></div>
 
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand navbar-dark fixed-top glass-nav">
-        <div class="container">
-            <a class="navbar-brand" href="index.html">Yannick Gibson</a>
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.html#projects">Projects</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.html#games">Games</a></li>
-                <li class="nav-item">
-                    <a class="nav-link" href="https://github.com/YannickGibson" target="_blank" rel="noopener noreferrer">
-                        <i class="fab fa-github"></i>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="https://www.linkedin.com/in/yannick-gibson" target="_blank" rel="noopener noreferrer">
-                        <i class="fab fa-linkedin"></i>
-                    </a>
-                </li>
-            </ul>
-        </div>
+    <!-- Floating pill nav -->
+    <nav class="pill-nav">
+        <a href="index.html">Home</a>
+        <a href="index.html#projects">Projects</a>
+        <a href="index.html#games">Games</a>
+        <span class="pill-nav-divider"></span>
+        <a href="https://github.com/YannickGibson" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+            <i class="fab fa-github"></i>
+        </a>
+        <a href="https://www.linkedin.com/in/yannick-gibson" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+            <i class="fab fa-linkedin"></i>
+        </a>
     </nav>
 
     <!-- Player -->
@@ -84,7 +76,7 @@
             if (app && /^subapps\/[\w.\-]+\.html$/.test(app)) {
                 frame.src = app;
                 var name = app.replace(/^subapps\//, '').replace(/\.html$/, '');
-                document.title = 'Yannick Gibson — ' + name.charAt(0).toUpperCase() + name.slice(1);
+                document.title = 'Yannick Daniel Gibson — ' + name.charAt(0).toUpperCase() + name.slice(1);
             }
             // Auto-focus the iframe once it loads
             frame.addEventListener('load', function () {
