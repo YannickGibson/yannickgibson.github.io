@@ -4,7 +4,7 @@
 	 viewBox="0 0 500 500" style="enable-background:new 0 0 500 500;" xml:space="preserve">
 <g id="Background_Simple">
 	<g>
-		<path style="fill:#C6FF00;" d="M410.708,240.149c-14.567,37.608-48.609,66.138-83.985,79.714
+		<path style="fill:#00D2FF;" d="M410.708,240.149c-14.567,37.608-48.609,66.138-83.985,79.714
 			c-27.459,10.538-56.674,9.497-85.794,0.447c-27.63-8.587-53.033-22.514-81.379-16.236c-22.264,4.932-47.366,11.992-67.486-8.326
 			c-10.045-10.144-16.712-23.9-21.113-37.982c-13.975-44.707-6.958-92.008,22.965-121.354
 			c25.636-25.141,62.282-37.259,97.637-35.112c6.724,0.408,13.468,1.361,20.142,2.985c17.465,4.249,36.526,10.902,54.451,8.49
@@ -62,7 +62,7 @@
 <g id="Plants">
 	<g>
 		<g>
-			<path style="fill:#C6FF00;" d="M386.5,251.348c0,0-3.5,4-5.5,12c-2,8,7,14,4,22.5s-8.5,12.5-7,21s8,9,3,18.5s-9.5,13-8,22
+			<path style="fill:#00D2FF;" d="M386.5,251.348c0,0-3.5,4-5.5,12c-2,8,7,14,4,22.5s-8.5,12.5-7,21s8,9,3,18.5s-9.5,13-8,22
 				s20.5,20.5,20.5,20.5s13-14.5,13.5-24s-11.5-15.5-9.5-24s7-15.5,6.5-23.5s-10-14-10-20s4-9.5,4-16.5c0-7-9-13-9-17s2-9,2-9
 				S381.5,239.848,386.5,251.348z"/>
 			<path style="opacity:0.5;fill:#FFFFFF;" d="M386.5,251.348c0,0-3.5,4-5.5,12c-2,8,7,14,4,22.5s-8.5,12.5-7,21s8,9,3,18.5
@@ -129,14 +129,14 @@
 					<use xlink:href="#XMLID_4_"  style="overflow:visible;"/>
 				</clipPath>
 				<g style="clip-path:url(#XMLID_00000114050599517760761040000004430396076773979561_);">
-					<path style="fill:#C6FF00;stroke:#263238;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="
+					<path style="fill:#00D2FF;stroke:#263238;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="
 						M251.079,251.2c-9.448-1.634-12.725-10.206-21.699-22.173c-1.265-1.687-2.757-3.057-4.385-4.178H198.92
 						c-0.516,0-0.982,0.305-1.189,0.777l-6.753,15.037c18.769,7.836,21.633-2.881,39.775,4.376
 						c7.991,3.196,13.8,7.701,17.811,11.762L251.079,251.2z"/>
-					<path style="fill:#C6FF00;stroke:#263238;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="
+					<path style="fill:#00D2FF;stroke:#263238;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="
 						M228.923,252.818c-14.641-1.373-43.464,10.065-43.464,10.065l-2.673,4.989h13.696c10.317-4.003,22.66-7.976,30.153-7.734
 						c7.884,0.254,9.545,4.325,9.782,7.734h2.223C239.761,262.349,239.034,253.766,228.923,252.818z"/>
-					<path style="fill:#C6FF00;stroke:#263238;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="
+					<path style="fill:#00D2FF;stroke:#263238;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="
 						M263.237,237.262c0-2.463-3.438-8.2-6.201-12.413h-8.277C253.142,229.69,263.237,240.486,263.237,237.262z"/>
 				</g>
 				
@@ -176,14 +176,14 @@
 					<use xlink:href="#XMLID_3_"  style="overflow:visible;"/>
 				</clipPath>
 				<g style="clip-path:url(#XMLID_00000088849344816133167300000008745330016627130779_);">
-					<path style="fill:#C6FF00;stroke:#263238;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="
+					<path style="fill:#00D2FF;stroke:#263238;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="
 						M326.152,243.126c-0.843-1.075-1.836-1.948-2.92-2.661h-17.363c-0.343,0-0.654,0.194-0.792,0.495l-4.497,9.579
 						c12.498,4.992,14.406-1.835,26.487,2.788c5.321,2.036,9.19,4.906,11.86,7.493l1.676-3.569
 						C334.31,256.211,332.128,250.749,326.152,243.126z"/>
-					<path style="fill:#C6FF00;stroke:#263238;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="
+					<path style="fill:#00D2FF;stroke:#263238;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="
 						M325.847,258.282c-9.749-0.874-28.943,6.412-28.943,6.412l-1.78,3.178h9.12c6.87-2.55,15.09-5.081,20.079-4.927
 						c5.25,0.162,6.356,2.755,6.514,4.927h1.48C333.064,264.354,332.58,258.886,325.847,258.282z"/>
-					<path style="fill:#C6FF00;stroke:#263238;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="
+					<path style="fill:#00D2FF;stroke:#263238;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="
 						M344.568,240.465h-5.512c2.919,3.083,9.641,9.961,9.641,7.908C348.697,246.803,346.408,243.149,344.568,240.465z"/>
 				</g>
 				
@@ -247,7 +247,7 @@
 				c-0.11,1.283-0.031,2.262,0.435,2.494c1.5,0.75,5,0.5,8,0.5s6.5,0.5,11.75,0.25s13-0.5,14.25-0.75
 				C201.35,388.081,200.888,386.779,199.554,386.132z"/>
 		</g>
-		<path style="fill:#C6FF00;stroke:#263238;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="M192.417,315
+		<path style="fill:#00D2FF;stroke:#263238;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="M192.417,315
 			l-11.238,56.347l2.342,5.855c0,0-2.354,3.797-7.104,4.797s-9.75,1-9.75,1s-1.25-6.25-0.5-7s1-3.75,1-3.75l6.5-56.75L192.417,315z"
 			/>
 		<g>
@@ -260,7 +260,7 @@
 				S247.667,388.364,247.667,387.114z"/>
 		</g>
 		<g>
-			<path style="fill:#C6FF00;stroke:#263238;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="M183.167,289.75
+			<path style="fill:#00D2FF;stroke:#263238;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="M183.167,289.75
 				c0,0,9.75-1,22.5,0.5c12.75,1.5,31.5,3.25,32,6.5s-12.377,70.896-12.377,72.646s2,3.5,2.5,4.5s0.5,2.25,0.5,2.25
 				s-6.123,6.604-10.873,8.354s-8.742,0.119-9.742,0.119s-1-6.75-0.25-10s2-11.5,2.25-12.25s4.242-48.869,4.242-48.869
 				s-27.5,6-49.75,3.5s-24.5-6-25.75-11.25s1.25-15.75,1.25-15.75L183.167,289.75z"/>
@@ -308,7 +308,7 @@
 			<clipPath id="XMLID_00000163035977933454868050000004907523843671022753_">
 				<use xlink:href="#XMLID_2_"  style="overflow:visible;"/>
 			</clipPath>
-			<path style="clip-path:url(#XMLID_00000163035977933454868050000004907523843671022753_);fill:#C6FF00;" d="M169.167,325.737
+			<path style="clip-path:url(#XMLID_00000163035977933454868050000004907523843671022753_);fill:#00D2FF;" d="M169.167,325.737
 				c2.367-0.327,5.316-0.773,8.451-1.296c-4.126-0.362-8.028-1.158-10.925-2.673c-10.437-5.459-11.928-31.15-10.437-44.317
 				c1.491-13.167-8.946-29.544-28.701-30.508c-7.358-0.359-12.955,0.62-17.105,2.337c-0.155,0.72-0.25,1.432-0.283,2.124
 				c-0.333,7,2.667,19.667,2.667,19.667s2.436,35.048,7.333,45.333c0.833,1.75,1.896,3.208,3.021,4.411
