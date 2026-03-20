@@ -737,6 +737,10 @@ p {
   display: block;
 }
 
+.game-card:not(:has(.game-card-thumb)) .game-card-body {
+  padding: 32px 28px;
+}
+
 .game-card-body {
   display: flex;
   align-items: center;

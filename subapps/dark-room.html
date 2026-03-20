@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Dark Room</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #000; overflow: hidden; touch-action: none;
+            user-select: none; -webkit-user-select: none;
+            font-family: 'Courier New', Courier, monospace;
+            color: #fff;
+        }
+        canvas { display: block; width: 100%; height: 100%; }
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            pointer-events: none; z-index: 10;
+        }
+        .interactive { pointer-events: auto; }
+        .hidden { display: none !important; }
+        .glitch { animation: glitch 0.2s linear infinite; }
+        @keyframes glitch {
+            0% { transform: translate(0) }
+            20% { transform: translate(-2px, 2px) }
+            40% { transform: translate(-2px, -2px) }
+            60% { transform: translate(2px, 2px) }
+            80% { transform: translate(2px, -2px) }
+            100% { transform: translate(0) }
+        }
+        /* Start screen */
+        #start-screen { text-align: center; }
+        #start-screen h1 {
+            font-size: clamp(1.8rem, 6vw, 3.5rem);
+            color: #dc2626; font-weight: 700; margin-bottom: 16px;
+            letter-spacing: 0.2em;
+        }
+        #start-screen p {
+            color: #9ca3af; margin-bottom: 24px; max-width: 400px;
+            margin-left: auto; margin-right: auto; padding: 0 16px;
+            font-size: clamp(0.85rem, 2.5vw, 1rem); line-height: 1.6;
+        }
+        .btn-dark {
+            display: inline-block; padding: 14px 32px;
+            background: #7f1d1d; color: #fff; font-weight: 700;
+            border: none; border-radius: 6px; font-family: inherit;
+            font-size: clamp(0.9rem, 2.5vw, 1rem); cursor: pointer;
+            box-shadow: 0 0 15px rgba(220,38,38,0.5);
+            transition: background 0.2s; min-width: 180px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-dark:hover, .btn-dark:active { background: #b91c1c; }
+        .btn-outline {
+            display: inline-block; padding: 12px 28px;
+            background: transparent; color: #dc2626;
+            border: 1px solid #dc2626; border-radius: 6px;
+            font-family: inherit; font-weight: 600; cursor: pointer;
+            font-size: clamp(0.85rem, 2.5vw, 1rem); min-width: 160px;
+            transition: background 0.2s, color 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-outline:hover, .btn-outline:active { background: #7f1d1d; color: #fff; }
+        .btn-gray {
+            display: inline-block; padding: 14px 32px;
+            background: #1f2937; color: #d1d5db;
+            border: 1px solid #6b7280; border-radius: 6px;
+            font-family: inherit; font-weight: 600; cursor: pointer;
+            font-size: clamp(0.85rem, 2.5vw, 1rem); min-width: 180px;
+            transition: background 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-gray:hover, .btn-gray:active { background: #374151; }
+        /* HUD */
+        #hud {
+            position: absolute; top: 12px; left: 12px;
+            font-size: clamp(1rem, 3vw, 1.25rem); color: #9ca3af;
+        }
+        /* Overlay screens */
+        .overlay-screen {
+            text-align: center; background: rgba(0,0,0,0.7);
+            width: 100%; height: 100%; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        #game-over h1 {
+            font-size: clamp(3rem, 12vw, 8rem);
+            color: #dc2626; font-weight: 900; margin-bottom: 16px;
+        }
+        #level-complete h1 {
+            font-size: clamp(1.5rem, 5vw, 2.5rem); color: #d1d5db; margin-bottom: 16px;
+        }
+        #level-complete p { color: #6b7280; margin-bottom: 24px; padding: 0 16px; }
+        #victory h1 {
+            font-size: clamp(1.5rem, 5vw, 2.5rem); color: #d1d5db; margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="ui-layer">
+        <div id="start-screen" class="interactive">
+            <h1>THE DARK ROOM</h1>
+            <p>Find all 5 lost souls. Use your cursor or finger as a flashlight. Do not let IT touch you.</p>
+            <button id="start-btn" class="btn-dark">ENTER THE DARK</button>
+        </div>
+
+        <div id="hud" class="hidden">
+            Souls: <span id="score">0</span> / 5
+        </div>
+
+        <div id="game-over" class="hidden interactive overlay-screen">
+            <h1 class="glitch">FOUND YOU</h1>
+            <button id="restart-btn" class="btn-outline" style="margin-top:24px;">Try Again</button>
+        </div>
+
+        <div id="level-complete" class="hidden interactive overlay-screen">
+            <h1 id="level-title">You survived Level 1...</h1>
+            <p>But IT is getting faster, and the dark is getting thicker.</p>
+            <button id="next-level-btn" class="btn-gray" style="margin-top:16px;">Descend to Level 2</button>
+        </div>
+
+        <div id="victory" class="hidden interactive overlay-screen">
+            <h1>You survived it all.</h1>
+            <button id="victory-restart-btn" class="btn-gray" style="margin-top:16px;">Return</button>
+        </div>
+    </div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const uiStart = document.getElementById('start-screen');
+    const uiHUD = document.getElementById('hud');
+    const uiGameOver = document.getElementById('game-over');
+    const uiLevelComplete = document.getElementById('level-complete');
+    const uiVictory = document.getElementById('victory');
+    const scoreEl = document.getElementById('score');
+
+    let width, height;
+    let gameState = 'start'; // start, play, over, level-complete, win
+    let mouse = { x: -1000, y: -1000 };
+    let score = 0;
+    
+    let currentLevel = 1;
+    let maxScore = 5;
+    
+    // Entities
+    let souls = [];
+    let monsters = [];
+    let flashlightRadius = 150;
+    
+    // Audio Context
+    let audioCtx;
+    let heartbeatOsc;
+    let heartbeatInterval;
+
+    // Reusable mask canvas for performance (don't create every frame)
+    const maskCanvas = document.createElement('canvas');
+    const mCtx = maskCanvas.getContext('2d');
+
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+        maskCanvas.width = width;
+        maskCanvas.height = height;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Input Handling
+    function updateMousePos(e) {
+        if (gameState !== 'play') return;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = width / rect.width;
+        const scaleY = height / rect.height;
+        if (e.touches && e.touches.length > 0) {
+            mouse.x = (e.touches[0].clientX - rect.left) * scaleX;
+            mouse.y = (e.touches[0].clientY - rect.top) * scaleY;
+        } else {
+            mouse.x = (e.clientX - rect.left) * scaleX;
+            mouse.y = (e.clientY - rect.top) * scaleY;
+        }
+    }
+    window.addEventListener('mousemove', updateMousePos);
+    window.addEventListener('touchstart', (e) => {
+        updateMousePos(e);
+        e.preventDefault();
+    }, { passive: false });
+    window.addEventListener('touchmove', (e) => {
+        updateMousePos(e);
+        e.preventDefault();
+    }, { passive: false });
+
+    // Audio Engine (Procedural)
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playDrone() {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(40, audioCtx.currentTime); // Deep rumble
+        gain.gain.setValueAtTime(0, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 2);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        return { osc, gain };
+    }
+
+    function playSoulCollect() {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.3);
+        
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+    }
+
+    function playJumpScare() {
+        // Terrifying dissonant cluster
+        const freqs = [100, 150, 212, 330, 415];
+        const masterGain = audioCtx.createGain();
+        masterGain.gain.setValueAtTime(2.0, audioCtx.currentTime); // LOUD
+        masterGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+        masterGain.connect(audioCtx.destination);
+
+        freqs.forEach(f => {
+            const osc = audioCtx.createOscillator();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(f, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(f * 0.5, audioCtx.currentTime + 1.5); // Pitch drop
+            osc.connect(masterGain);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 1.5);
+        });
+    }
+
+    // Game Logic
+    function spawnSouls() {
+        souls = [];
+        for (let i = 0; i < maxScore; i++) {
+            souls.push({
+                x: Math.random() * (width - 100) + 50,
+                y: Math.random() * (height - 100) + 50,
+                collected: false
+            });
+        }
+    }
+
+    function spawnMonsters() {
+        monsters = [];
+        let numMonsters = currentLevel === 3 ? 2 : 1;
+        for (let i = 0; i < numMonsters; i++) {
+            let angle = Math.random() * Math.PI * 2 + (i * Math.PI); // Offset second monster
+            let dist = Math.max(width, height);
+            let baseSpeed = currentLevel === 1 ? 1.5 : (currentLevel === 2 ? 2.8 : 2.2);
+            monsters.push({
+                x: width/2 + Math.cos(angle) * dist,
+                y: height/2 + Math.sin(angle) * dist,
+                speed: baseSpeed + (Math.random() * 1.5), // More varied speeds so they break apart
+                radius: 25
+            });
+        }
+    }
+
+    function startGame() {
+        initAudio();
+        gameState = 'play';
+        score = 0;
+        
+        // Detect mobile for larger flashlight (finger is less precise than cursor)
+        const isMobile = ('ontouchstart' in window) || window.innerWidth < 768;
+        const mobileBonus = isMobile ? 30 : 0;
+        
+        // Set level specifics
+        if (currentLevel === 1) { maxScore = 5; flashlightRadius = 150 + mobileBonus; }
+        else if (currentLevel === 2) { maxScore = 7; flashlightRadius = 110 + mobileBonus; }
+        else { maxScore = 10; flashlightRadius = 90 + mobileBonus; } // Level 3
+        
+        uiHUD.innerHTML = `Souls: <span id="score">0</span> / ${maxScore}`;
+        
+        uiStart.classList.add('hidden');
+        uiGameOver.classList.add('hidden');
+        uiVictory.classList.add('hidden');
+        uiLevelComplete.classList.add('hidden');
+        uiHUD.classList.remove('hidden');
+        
+        // Reset player pos to center if no mouse event yet
+        if (mouse.x === -1000) {
+            mouse.x = width / 2;
+            mouse.y = height / 2;
+        }
+
+        spawnSouls();
+        spawnMonsters();
+        
+        // Start background drone
+        playDrone();
+        
+        requestAnimationFrame(gameLoop);
+    }
+
+    function drawFullMap(isWin) {
+        // Illuminate the room (red for death, calm teal for win)
+        ctx.fillStyle = isWin ? '#0f1a1f' : '#3a0a0a'; 
+        ctx.fillRect(0, 0, width, height);
+
+        // Draw all Souls
+        souls.forEach(soul => {
+            ctx.beginPath();
+            ctx.arc(soul.x, soul.y, 8, 0, Math.PI * 2);
+            if (soul.collected) {
+                ctx.fillStyle = 'rgba(100, 100, 100, 0.4)'; // Dimmed if collected
+                ctx.shadowBlur = 0;
+            } else {
+                ctx.fillStyle = 'rgba(150, 200, 255, 1)'; // Bright if missed
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = '#96c8ff';
+            }
+            ctx.fill();
+            ctx.shadowBlur = 0; 
+        });
+
+        // Draw Monsters clearly
+        monsters.forEach(m => {
+            ctx.beginPath();
+            ctx.arc(m.x, m.y, m.radius, 0, Math.PI * 2);
+            ctx.fillStyle = isWin ? '#550000' : '#ff0000'; 
+            ctx.shadowBlur = 30;
+            ctx.shadowColor = '#ff0000';
+            ctx.fill();
+            ctx.shadowBlur = 0;
+    
+            // Draw Monster Eyes
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(m.x - 8, m.y - 5, 4, 0, Math.PI*2);
+            ctx.arc(m.x + 8, m.y - 5, 4, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(m.x - 8, m.y - 5, 2, 0, Math.PI*2);
+            ctx.arc(m.x + 8, m.y - 5, 2, 0, Math.PI*2);
+            ctx.fill();
+        });
+    }
+
+    function gameOver() {
+        gameState = 'over';
+        uiHUD.classList.add('hidden');
+        uiGameOver.classList.remove('hidden');
+        playJumpScare();
+        
+        drawFullMap(false);
+    }
+
+    function winGame() {
+        uiHUD.classList.add('hidden');
+        if (currentLevel < 3) {
+            gameState = 'level-complete';
+            document.getElementById('level-title').innerText = `You survived Level ${currentLevel}...`;
+            document.getElementById('next-level-btn').innerText = `Descend to Level ${currentLevel + 1}`;
+            uiLevelComplete.classList.remove('hidden');
+        } else {
+            gameState = 'win';
+            uiVictory.classList.remove('hidden');
+        }
+        
+        drawFullMap(true);
+    }
+
+    function update() {
+        // Monsters chase player
+        let speedMultiplier = currentLevel === 1 ? 0.8 : (currentLevel === 2 ? 1.2 : 0.9);
+        
+        for (let i = 0; i < monsters.length; i++) {
+            let m = monsters[i];
+            let dx = mouse.x - m.x;
+            let dy = mouse.y - m.y;
+            let dist = Math.hypot(dx, dy);
+            
+            let currentSpeed = m.speed + (score * speedMultiplier);
+            
+            if (dist > 0) {
+                m.x += (dx / dist) * currentSpeed;
+                m.y += (dy / dist) * currentSpeed;
+            }
+    
+            // Check collision with monster
+            if (dist < m.radius + 10) {
+                gameOver();
+                return;
+            }
+        }
+
+        // Repulsion logic: keep monsters from merging into one blob
+        for (let i = 0; i < monsters.length; i++) {
+            for (let j = i + 1; j < monsters.length; j++) {
+                let m1 = monsters[i];
+                let m2 = monsters[j];
+                let dx = m1.x - m2.x;
+                let dy = m1.y - m2.y;
+                let dist = Math.hypot(dx, dy);
+                if (dist < (m1.radius + m2.radius) && dist > 0) {
+                    let overlap = (m1.radius + m2.radius) - dist;
+                    // Push them slightly apart
+                    m1.x += (dx / dist) * (overlap * 0.1);
+                    m1.y += (dy / dist) * (overlap * 0.1);
+                    m2.x -= (dx / dist) * (overlap * 0.1);
+                    m2.y -= (dy / dist) * (overlap * 0.1);
+                }
+            }
+        }
+
+        // Check collision with souls
+        souls.forEach(soul => {
+            if (!soul.collected) {
+                let sdx = mouse.x - soul.x;
+                let sdy = mouse.y - soul.y;
+                if (Math.hypot(sdx, sdy) < 30) {
+                    soul.collected = true;
+                    score++;
+                    document.getElementById('score').innerText = score;
+                    playSoulCollect();
+                    
+                    // Flashlight flickers/shrinks slightly on pickup to increase tension
+                    let shrinkAmount = currentLevel === 1 ? 15 : 20;
+                    flashlightRadius = Math.max(60, flashlightRadius - shrinkAmount);
+                    
+                    if (score >= maxScore) winGame();
+                }
+            }
+        });
+    }
+
+    function draw() {
+        // Base environment (drawn beneath darkness)
+        ctx.fillStyle = '#0a0a0a'; // Very dark gray floor
+        ctx.fillRect(0, 0, width, height);
+
+        // Draw Souls
+        souls.forEach(soul => {
+            if (!soul.collected) {
+                ctx.beginPath();
+                ctx.arc(soul.x, soul.y, 8, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(150, 200, 255, 0.8)'; // Ethereal blue
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = '#96c8ff';
+                ctx.fill();
+                ctx.shadowBlur = 0; // Reset
+            }
+        });
+
+        // Draw Monsters (faintly visible even outside flashlight)
+        monsters.forEach(m => {
+            ctx.beginPath();
+            ctx.arc(m.x, m.y, m.radius, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(100, 0, 0, 0.3)'; // Dark blood red
+            ctx.fill();
+        });
+
+        // --- The Darkness / Flashlight Mask ---
+        // Fill mask with pure black (reuse pre-created maskCanvas)
+        mCtx.globalCompositeOperation = 'source-over';
+        mCtx.fillStyle = '#000000';
+        mCtx.fillRect(0, 0, width, height);
+
+        // "Punch out" the flashlight hole
+        mCtx.globalCompositeOperation = 'destination-out';
+        
+        // Flicker effect
+        let flicker = Math.random() > 0.95 ? (Math.random() * 20 - 10) : 0;
+        let currentRadius = flashlightRadius + flicker;
+
+        const gradient = mCtx.createRadialGradient(mouse.x, mouse.y, currentRadius * 0.2, mouse.x, mouse.y, currentRadius);
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 1)'); // Transparent core (dest-out makes it clear)
+        gradient.addColorStop(0.7, 'rgba(0, 0, 0, 0.5)'); // Soft edge
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)'); // Solid black edge
+
+        mCtx.fillStyle = gradient;
+        mCtx.beginPath();
+        mCtx.arc(mouse.x, mouse.y, currentRadius, 0, Math.PI * 2);
+        mCtx.fill();
+
+        // Draw the darkness mask over the main canvas
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.drawImage(maskCanvas, 0, 0);
+        
+        // Draw scary eyes if monsters are within flashlight
+        monsters.forEach(m => {
+            let distToMonster = Math.hypot(mouse.x - m.x, mouse.y - m.y);
+            if (distToMonster < currentRadius) {
+                 ctx.fillStyle = 'red';
+                 ctx.beginPath();
+                 ctx.arc(m.x - 10, m.y - 5, 4, 0, Math.PI*2);
+                 ctx.arc(m.x + 10, m.y - 5, 4, 0, Math.PI*2);
+                 ctx.shadowBlur = 10;
+                 ctx.shadowColor = 'red';
+                 ctx.fill();
+                 ctx.shadowBlur = 0;
+            }
+        });
+    }
+
+    function gameLoop() {
+        if (gameState !== 'play') return;
+        update();
+        if (gameState === 'play') { // Check again in case update() triggered game over
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+    }
+
+    // Button Listeners
+    document.getElementById('start-btn').addEventListener('click', () => { currentLevel = 1; startGame(); });
+    document.getElementById('restart-btn').addEventListener('click', () => { currentLevel = 1; startGame(); });
+    document.getElementById('next-level-btn').addEventListener('click', () => { currentLevel++; startGame(); });
+    document.getElementById('victory-restart-btn').addEventListener('click', () => {
+        location.reload(); // Hard reset
+    });
+
+    // Initial dark draw
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+</script>
+</body>
+</html>
