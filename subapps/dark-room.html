@@ -518,6 +518,10 @@
         });
     }
 
+    window.addEventListener('keydown', e => {
+        if (e.code === 'Delete' && gameState === 'play') { currentLevel++; startGame(); }
+    });
+
     function gameLoop() {
         if (gameState !== 'play') return;
         update();

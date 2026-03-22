@@ -156,6 +156,7 @@
             <ol id="leaderboard-list"></ol>
         </div>
         <div id="shoot-hint">Press Space to Shoot</div>
+        <div style="position:fixed;bottom:36px;right:10px;font-size:11px;color:rgba(255,255,255,0.35);z-index:10;pointer-events:auto;">Music by <a href="https://patrickdearteaga.com" target="_blank" style="color:rgba(255,255,255,0.5);text-decoration:none;">Patrick de Arteaga</a></div>
         <div id="game-over">
             <h1>Game Over!</h1>
             <p>Final Length: <span id="final-score"></span></p>
@@ -169,6 +170,30 @@
         const scoreElement = document.getElementById('score');
         const gameOverScreen = document.getElementById('game-over');
         const finalScoreElement = document.getElementById('final-score');
+
+        // Background music
+        const music = new Audio('https://patrickdearteaga.com/audio/Pr%C3%B3rroga%20de%20Tiempo%20B.ogg');
+        music.loop = true; music.volume = 0.25;
+        let musicStarted = false;
+        function startMusic() { if (musicStarted) return; musicStarted = true; music.play().catch(() => { musicStarted = false; }); }
+        ['click','keydown','touchstart'].forEach(e => document.addEventListener(e, startMusic, {once: true}));
+
+        // SFX
+        let sfxCtx = null;
+        function initSfx() { if (!sfxCtx) sfxCtx = new (window.AudioContext || window.webkitAudioContext)(); if (sfxCtx.state === 'suspended') sfxCtx.resume(); }
+        function sfxPop() {
+            if (!sfxCtx) return;
+            const t = sfxCtx.currentTime;
+            const osc = sfxCtx.createOscillator(), gain = sfxCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(480 + Math.random() * 60, t);
+            osc.frequency.exponentialRampToValueAtTime(280, t + 0.12);
+            gain.gain.setValueAtTime(0, t);
+            gain.gain.linearRampToValueAtTime(0.08, t + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+            osc.connect(gain); gain.connect(sfxCtx.destination);
+            osc.start(t); osc.stop(t + 0.12);
+        }
 
         let width, height;
         const MAP_SIZE = 3000;
@@ -951,6 +976,8 @@
 
         function startGame() {
             resize();
+            initSfx();
+            startMusic();
             player = new Snake(MAP_SIZE/2, MAP_SIZE/2, true);
             foods = [];
             enemies = [];
@@ -1003,11 +1030,20 @@
                                     if(idx > -1) { enemies.splice(idx, 1); spawnEnemies(1); }
                                 }
                             } else {
-                                // Cut in half at index i
+                                // Cut at index i in drawnSegments
                                 let severed = s.drawnSegments.slice(i);
                                 s.length = i;
-                                s.segments = s.segments.slice(0, i);
                                 s.drawnSegments = s.drawnSegments.slice(0, i);
+                                // Find the closest raw segment to the hit point
+                                let hitX = seg.x, hitY = seg.y;
+                                let bestRaw = 0, bestDist = Infinity;
+                                for (let r = 0; r < s.segments.length; r++) {
+                                    let rdx = s.segments[r].x - hitX;
+                                    let rdy = s.segments[r].y - hitY;
+                                    let rd = rdx*rdx + rdy*rdy;
+                                    if (rd < bestDist) { bestDist = rd; bestRaw = r; }
+                                }
+                                s.segments = s.segments.slice(0, Math.max(i, bestRaw));
                                 if (s.isPlayer) scoreElement.innerText = s.length;
                                 
                                 // Drop food for severed tail
@@ -1032,7 +1068,7 @@
                     let dy = snake.y - f.y;
                     if (dx*dx + dy*dy < (snake.radius + f.radius) * (snake.radius + f.radius)) {
                         snake.length += f.size;
-                        if(snake.isPlayer) scoreElement.innerText = snake.length;
+                        if(snake.isPlayer) { scoreElement.innerText = snake.length; sfxPop(); }
                         foods.splice(i, 1);
                         if(foods.length < FOOD_COUNT) foods.push(new Food()); // replenish
                     }

@@ -6,6 +6,12 @@ const SUBAPPS = [
         image: "assets/subapps/slither.png"
     },
     {
+        title: "Iron & Shadow",
+        description: "Dungeon crawler — fight through dark corridors lit only by torchlight.",
+        path: "subapps/dungeon.html",
+        image: "assets/subapps/dungeon.png"
+    },
+    {
         title: "The Dark Room",
         description: "Find lost souls with your flashlight. Do not let IT catch you.",
         path: "subapps/dark-room.html",
@@ -22,5 +28,5 @@ const SUBAPPS = [
         description: "Top-down tactical shooter — clear 10 sectors of a hostile space station.",
         path: "subapps/station-zero.html",
         image: "assets/subapps/station-zero.png"
-    }
+    },
 ];

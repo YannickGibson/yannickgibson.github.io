@@ -18,6 +18,7 @@
         #progress-bar-inner { height: 4px; background: #0ff; width: 0%; transition: width 0.5s; box-shadow: 0 0 10px #0ff; }
 
         #level-text { position: absolute; top: 12px; right: 12px; z-index: 10; font-size: clamp(16px, 3vw, 24px); font-weight: bold; text-shadow: 0 0 10px #0f0; }
+        #enemy-counter { position: absolute; top: 40px; left: 50%; transform: translateX(-50%); z-index: 10; font-size: clamp(12px, 2vw, 16px); letter-spacing: 3px; color: #f33; text-shadow: 0 0 10px #f33; pointer-events: none; }
         #msg-popup { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); color: #0ff; font-size: clamp(14px, 3vw, 20px); display: none; z-index: 10; text-shadow: 0 0 15px #0ff; letter-spacing: 4px; animation: pulse 2s infinite; white-space: nowrap; }
         #overlay { position: absolute; inset: 0; background: radial-gradient(circle, #0a1010 0%, #000 100%); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; padding: 20px; }
         #overlay h1 { font-size: clamp(24px, 6vw, 48px); }
@@ -30,7 +31,7 @@
         #touch-move, #touch-aim { display: none; position: fixed; z-index: 20; pointer-events: auto; }
         #touch-move { bottom: 20px; left: 20px; width: 120px; height: 120px; border-radius: 50%; background: rgba(0,255,0,0.08); border: 2px solid rgba(0,255,0,0.25); }
         #touch-move-knob { position: absolute; top: 50%; left: 50%; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; background: rgba(0,255,0,0.3); border: 1px solid rgba(0,255,0,0.5); }
-        #touch-aim { bottom: 20px; right: 20px; width: 100px; height: 100px; border-radius: 50%; background: rgba(0,255,255,0.08); border: 2px solid rgba(0,255,255,0.25); display: flex; align-items: center; justify-content: center; font-size: 10px; color: #0ff; font-weight: 700; letter-spacing: 1px; }
+        #touch-aim { bottom: 20px; right: 20px; width: 100px; height: 100px; border-radius: 50%; background: rgba(0,255,255,0.08); border: 2px solid rgba(0,255,255,0.25); align-items: center; justify-content: center; font-size: 10px; color: #0ff; font-weight: 700; letter-spacing: 1px; }
         @media (hover: none) and (pointer: coarse) { #touch-move, #touch-aim { display: flex; align-items: center; justify-content: center; } }
     </style>
 </head>
@@ -49,12 +50,14 @@
     </div>
 
     <div id="level-text">SEC_01</div>
+    <div id="enemy-counter">HOSTILES: 0</div>
     <div id="msg-popup">EXTRACTION LINK ESTABLISHED</div>
     
     <div id="overlay">
         <div id="menu-content">
             <h1 style="letter-spacing: 15px; margin-bottom: 40px; font-size: 48px; color: #0f0; text-shadow: 0 0 20px #0f0; text-align: center;">STATION ZERO</h1>
             <div style="text-align: center;"><button id="start-btn">ENGAGE SYSTEMS</button></div>
+            <div style="text-align:center;margin-top:30px;font-size:12px;color:#0a0;opacity:.6;">Music by <a href="https://patrickdearteaga.com" target="_blank" style="color:#0f0;">Patrick de Arteaga</a></div>
         </div>
     </div>
 
@@ -66,19 +69,33 @@
     <script>
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
+
+        // Background music
+        const music = new Audio("https://patrickdearteaga.com/audio/La%20Llamada%20de%20Ile.ogg");
+        music.loop = true;
+        music.volume = 0.25;
+
         const TILE_SIZE = 64;
-        const GRID_SIZE = 40; 
+        const GRID_SIZE = 80; 
         const MAX_SECTORS = 10;
 
         let player = { x: 0, y: 0, angle: 0, hp: 100, speed: 350, radius: 18, weapon: 'blaster' };
-        let map = [], enemies = [], bullets = [], enemyBullets = [], items = [], activeRays = [];
+        let map = [], enemies = [], bullets = [], enemyBullets = [], items = [], activeRays = [], particles = [];
+
+        function spawnHitParticles(x, y, color, count) {
+            for (let i = 0; i < count; i++) {
+                const ang = Math.random() * Math.PI * 2;
+                const spd = 80 + Math.random() * 200;
+                particles.push({ x, y, vx: Math.cos(ang)*spd, vy: Math.sin(ang)*spd, life: 0.3 + Math.random()*0.3, maxLife: 0.3 + Math.random()*0.3, color, size: 2 + Math.random()*4 });
+            }
+        }
         let keys = {}, lastTime = 0, level = 1, extraction = null, audioCtx = null, gameActive = false;
 
         const WEAPONS = {
             blaster: { name: 'PULSE BLASTER', type: 'projectile', speed: 1200, dmg: 40, color: '#0ff', sfx: 400 },
             shotgun: { name: 'PLASMA SPREAD', type: 'projectile', speed: 1000, dmg: 25, color: '#f0f', sfx: 200, count: 5 },
-            laser: { name: 'VOID BEAM', type: 'ray', bounces: 6, dmg: 120, color: '#ff0', sfx: 800, duration: 0.5 },
-            railgun: { name: 'RAIL PIERCER', type: 'ray', bounces: 0, dmg: 300, color: '#fff', sfx: 1200, duration: 0.2 }
+            laser: { name: 'VOID BEAM', type: 'ray', bounces: 3, dmg: 120, color: '#ff0', sfx: 800, duration: 0.5 },
+            railgun: { name: 'RAIL PIERCER', type: 'ray', bounces: 0, pierces: 2, dmg: 300, color: '#fff', sfx: 1200, duration: 0.2 }
         };
 
         function playSfx(freq, type, dur, vol = 0.08) {
@@ -103,7 +120,10 @@
         function getBFSPath(startGrid, endGrid) {
             const queue = [[startGrid]];
             const visited = new Set([`${startGrid.x},${startGrid.y}`]);
-            const dirs = [{x:0, y:-1}, {x:0, y:1}, {x:-1, y:0}, {x:1, y:0}];
+            const dirs = [
+                {x:0, y:-1}, {x:0, y:1}, {x:-1, y:0}, {x:1, y:0},
+                {x:-1, y:-1}, {x:1, y:-1}, {x:-1, y:1}, {x:1, y:1}
+            ];
             while (queue.length > 0) {
                 const path = queue.shift();
                 const curr = path[path.length - 1];
@@ -112,6 +132,10 @@
                     const next = { x: curr.x + d.x, y: curr.y + d.y };
                     if (next.x >= 0 && next.x < GRID_SIZE && next.y >= 0 && next.y < GRID_SIZE && 
                         map[next.y][next.x] === 0 && !visited.has(`${next.x},${next.y}`)) {
+                        // For diagonals, both adjacent cardinal cells must be open
+                        if (d.x !== 0 && d.y !== 0) {
+                            if (map[curr.y][next.x] === 1 || map[next.y][curr.x] === 1) continue;
+                        }
                         visited.add(`${next.x},${next.y}`);
                         queue.push([...path, next]);
                     }
@@ -127,7 +151,7 @@
             }
 
             map = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(1));
-            let x = 20, y = 20, steps = 1500;
+            let x = 40, y = 40, steps = 5000;
             while (steps > 0) {
                 map[y][x] = 0;
                 let dir = Math.floor(Math.random() * 4);
@@ -137,24 +161,29 @@
                 else if (dir === 3 && y > 2) y--;
                 steps--;
             }
-            player.x = 20 * TILE_SIZE + 32; player.y = 20 * TILE_SIZE + 32;
-            map[20][20] = 0;
+            player.x = 40 * TILE_SIZE + 32; player.y = 40 * TILE_SIZE + 32;
+            map[40][40] = 0;
             enemies = []; bullets = []; enemyBullets = []; items = []; activeRays = [];
             extraction = null;
             
             document.getElementById('msg-popup').style.display = 'none';
             document.getElementById('level-text').innerText = `SEC_${level < 10 ? '0' + level : level}`;
             document.getElementById('progress-bar-inner').style.width = ((level - 1) / MAX_SECTORS * 100) + '%';
-
-            for(let i = 0; i < 8 + (level * 3); i++) {
+            if (level < 10)
+                N_ENEMIES = -2 + (level * 2)
+            else
+                N_ENEMIES = 70
+            let spawnAttempts = 0;
+            while(enemies.length < N_ENEMIES && spawnAttempts < N_ENEMIES * 20) {
+                spawnAttempts++;
                 let ex = Math.floor(Math.random() * GRID_SIZE), ey = Math.floor(Math.random() * GRID_SIZE);
                 if(map[ey][ex] === 0 && Math.hypot(ex*TILE_SIZE - player.x, ey*TILE_SIZE - player.y) > 400) {
                     const type = Math.random();
                     let en = { x: ex*TILE_SIZE+32, y: ey*TILE_SIZE+32, pulse: Math.random()*5, path: [], lastPathUpdate: 0 };
-                    if (type < 0.4) { en.type = 'stalker'; en.hp = 60; en.speed = 130; en.color = '#f33'; en.size = 30; }
-                    else if (type < 0.65) { en.type = 'tank'; en.hp = 200; en.speed = 70; en.color = '#f0f'; en.size = 50; }
-                    else if (type < 0.85) { en.type = 'sentry'; en.hp = 50; en.speed = 90; en.color = '#ff8c00'; en.size = 35; en.shootTimer = 2; }
-                    else { en.type = 'dasher'; en.hp = 40; en.speed = 260; en.color = '#ff0'; en.size = 22; }
+                    if (type < 0.4) { en.type = 'stalker'; en.hp = 60; en.speed = 130; en.color = '#f33'; en.size = 30; en.dmg = 30; }
+                    else if (type < 0.65) { en.type = 'tank'; en.hp = 200; en.speed = 70; en.color = '#f0f'; en.size = 50; en.dmg = 60; }
+                    else if (type < 0.85) { en.type = 'sentry'; en.hp = 50; en.speed = 90; en.color = '#ff8c00'; en.size = 35; en.shootTimer = 2; en.dmg = 20; }
+                    else { en.type = 'dasher'; en.hp = 40; en.speed = 260; en.color = '#ff0'; en.size = 22; en.dmg = 15; }
                     enemies.push(en);
                 }
             }
@@ -191,6 +220,19 @@
             playSfx(440, 'sine', 0.6, 0.15);
         }
 
+        function showDeathScreen() {
+            gameActive = false;
+            const overlay = document.getElementById('overlay');
+            const content = document.getElementById('menu-content');
+            overlay.style.display = 'flex';
+            content.innerHTML = `
+                <h1 style="letter-spacing: 15px; margin-bottom: 20px; font-size: 48px; color: #f33; text-shadow: 0 0 20px #f33; text-align: center;">CORE FAILURE</h1>
+                <p style="color: #f66; letter-spacing: 3px; margin-bottom: 40px; text-align: center;">OPERATIVE TERMINATED — SECTOR ${level}</p>
+                <div style="text-align: center;"><button onclick="restartGame()">RE-INITIATE</button></div>
+            `;
+            playSfx(120, 'sawtooth', 0.8, 0.3);
+        }
+
         function showWinScreen() {
             gameActive = false;
             document.getElementById('progress-bar-inner').style.width = '100%';
@@ -200,9 +242,22 @@
             content.innerHTML = `
                 <h1 style="letter-spacing: 15px; margin-bottom: 20px; font-size: 48px; color: #0ff; text-shadow: 0 0 20px #0ff; text-align: center;">MISSION COMPLETE</h1>
                 <p style="color: #0f0; letter-spacing: 3px; margin-bottom: 40px; text-align: center;">STATION ZERO HAS BEEN PURGED</p>
-                <div style="text-align: center;"><button onclick="location.reload()">RE-INITIATE</button></div>
+                <div style="text-align: center;"><button onclick="restartGame()">RE-INITIATE</button></div>
             `;
             playSfx(880, 'sine', 1, 0.2);
+        }
+
+        function restartGame() {
+            level = 1;
+            player.hp = 100;
+            player.weapon = 'blaster';
+            document.getElementById('hp-bar').style.width = '100%';
+            document.getElementById('weapon-info').innerText = 'PULSE BLASTER';
+            document.getElementById('progress-bar-inner').style.width = '0%';
+            enemies = []; bullets = []; enemyBullets = []; items = []; activeRays = []; particles = [];
+            extraction = null;
+            document.getElementById('overlay').style.display = 'none';
+            generateMap();
         }
 
         function isWall(x, y) {
@@ -210,30 +265,77 @@
             return !map[gy] || map[gy][gx] === 1;
         }
 
-        function castRay(startX, startY, angle, maxBounces, damage) {
+        function castRay(startX, startY, angle, maxBounces, damage, maxPierces) {
             let curX = startX, curY = startY, curAngle = angle;
             const points = [{x: startX, y: startY}];
             const hitEnemies = new Set();
+            const STEP = 4;
+            let piercesLeft = maxPierces || 0;
             for (let b = 0; b <= maxBounces; b++) {
                 const vx = Math.cos(curAngle), vy = Math.sin(curAngle);
                 let hit = false;
-                for (let d = 4; d < 1500; d += 6) {
+                for (let d = STEP; d < 1500; d += STEP) {
                     const tx = curX + vx * d;
                     const ty = curY + vy * d;
                     for(let i=enemies.length-1; i>=0; i--) {
                         if(!hitEnemies.has(i) && Math.hypot(tx - enemies[i].x, ty - enemies[i].y) < enemies[i].size/2) {
                             enemies[i].hp -= damage;
+                            enemies[i].flashTimer = 0.15;
                             hitEnemies.add(i);
+                            spawnHitParticles(enemies[i].x, enemies[i].y, enemies[i].color, 12);
                             if (enemies[i].hp <= 0) {
+                                spawnHitParticles(enemies[i].x, enemies[i].y, '#fff', 20);
                                 if (Math.random() < 0.25) items.push({ x: enemies[i].x, y: enemies[i].y, type: ['shotgun', 'laser', 'railgun'][Math.floor(Math.random()*3)] });
                                 enemies.splice(i, 1);
                             }
                         }
                     }
                     if (isWall(tx, ty)) {
+                        if (piercesLeft > 0) {
+                            points.push({x: tx, y: ty});
+                            // Count wall tiles crossed; stop if exceeding pierce budget
+                            let wallTiles = 1;
+                            let pierced = false;
+                            let lastWallCellX = Math.floor(tx / TILE_SIZE);
+                            let lastWallCellY = Math.floor(ty / TILE_SIZE);
+                            for (let pd = d + STEP; pd < 1500; pd += STEP) {
+                                const ex = curX + vx * pd;
+                                const ey = curY + vy * pd;
+                                if (!isWall(ex, ey)) {
+                                    piercesLeft = 0; // once it exits a wall, no more piercing
+                                    points.push({x: ex, y: ey});
+                                    d = pd;
+                                    pierced = true;
+                                    break;
+                                }
+                                // Count new wall tiles entered
+                                const wcx = Math.floor(ex / TILE_SIZE);
+                                const wcy = Math.floor(ey / TILE_SIZE);
+                                if (wcx !== lastWallCellX || wcy !== lastWallCellY) {
+                                    wallTiles++;
+                                    lastWallCellX = wcx;
+                                    lastWallCellY = wcy;
+                                    if (wallTiles > piercesLeft) {
+                                        points.push({x: ex, y: ey});
+                                        piercesLeft = 0;
+                                        pierced = false;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!pierced) { hit = true; break; }
+                            continue;
+                        }
                         points.push({x: tx, y: ty});
-                        if (isWall(tx - vx*6, ty)) curAngle = Math.PI - curAngle; else curAngle = -curAngle;
-                        curX = tx; curY = ty; hit = true; break;
+                        const prevX = tx - vx * STEP, prevY = ty - vy * STEP;
+                        const cellX = Math.floor(tx / TILE_SIZE), cellY = Math.floor(ty / TILE_SIZE);
+                        const prevCellX = Math.floor(prevX / TILE_SIZE), prevCellY = Math.floor(prevY / TILE_SIZE);
+                        const crossedX = cellX !== prevCellX;
+                        const crossedY = cellY !== prevCellY;
+                        if (crossedX && crossedY) { curAngle = curAngle + Math.PI; }
+                        else if (crossedX) { curAngle = Math.PI - curAngle; }
+                        else { curAngle = -curAngle; }
+                        curX = prevX; curY = prevY; hit = true; break;
                     }
                 }
                 if (!hit) { points.push({x: curX + vx*1500, y: curY + vy*1500}); break; }
@@ -244,6 +346,8 @@
         function update(dt) {
             if (!gameActive) return;
 
+            if (keys['Delete']) { keys['Delete'] = false; level++; generateMap(); return; }
+
             let mx = 0, my = 0;
             if (keys['KeyW']) my -= 1; if (keys['KeyS']) my += 1;
             if (keys['KeyA']) mx -= 1; if (keys['KeyD']) mx += 1;
@@ -251,8 +355,8 @@
                 const mag = Math.hypot(mx, my);
                 const step = player.speed * dt;
                 const nx = player.x + (mx/mag) * step, ny = player.y + (my/mag) * step;
-                if (!isWall(nx - 12, player.y) && !isWall(nx + 12, player.y)) player.x = nx;
-                if (!isWall(player.x, ny - 12) && !isWall(player.x, ny + 12)) player.y = ny;
+                if (!isWall(nx - 12, player.y - 12) && !isWall(nx + 12, player.y - 12) && !isWall(nx - 12, player.y + 12) && !isWall(nx + 12, player.y + 12)) player.x = nx;
+                if (!isWall(player.x - 12, ny - 12) && !isWall(player.x + 12, ny - 12) && !isWall(player.x - 12, ny + 12) && !isWall(player.x + 12, ny + 12)) player.y = ny;
             }
 
             items.forEach((it, i) => {
@@ -284,6 +388,14 @@
                     en.x += Math.cos(angle) * en.speed * dt;
                     en.y += Math.sin(angle) * en.speed * dt;
                     if (Math.hypot(en.x - targetX, en.y - targetY) < 10) en.path.shift();
+                } else {
+                    // No path — move directly toward the player
+                    const dist = Math.hypot(player.x - en.x, player.y - en.y);
+                    if (dist > 5) {
+                        const angle = Math.atan2(player.y - en.y, player.x - en.x);
+                        en.x += Math.cos(angle) * en.speed * dt;
+                        en.y += Math.sin(angle) * en.speed * dt;
+                    }
                 }
                 if (en.type === 'sentry') {
                     en.shootTimer -= dt;
@@ -298,7 +410,7 @@
                     }
                 }
                 if (Math.hypot(player.x - en.x, player.y - en.y) < player.radius + en.size/3) {
-                    player.hp -= 40; triggerHitEffect(); enemies.splice(i, 1);
+                    player.hp -= (en.dmg || 40); triggerHitEffect(); enemies.splice(i, 1);
                 }
             }
 
@@ -307,8 +419,10 @@
                 if (isWall(b.x, b.y)) { bullets.splice(i, 1); return; }
                 enemies.forEach((en, ei) => {
                     if (Math.hypot(b.x - en.x, b.y - en.y) < en.size/2 + 5) {
-                        en.hp -= b.dmg; bullets.splice(i, 1);
+                        en.hp -= b.dmg; en.flashTimer = 0.15; bullets.splice(i, 1);
+                        spawnHitParticles(en.x, en.y, en.color, 8);
                         if (en.hp <= 0) {
+                            spawnHitParticles(en.x, en.y, '#fff', 16);
                             if (Math.random() < 0.25) items.push({ x: en.x, y: en.y, type: ['shotgun', 'laser', 'railgun'][Math.floor(Math.random()*3)] });
                             enemies.splice(ei, 1);
                         }
@@ -324,8 +438,20 @@
                 }
             });
 
-            if (player.hp <= 0) { player.hp = 0; setTimeout(() => location.reload(), 500); }
+            // Update particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx * dt; p.y += p.vy * dt;
+                p.vx *= 0.95; p.vy *= 0.95;
+                p.life -= dt;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+            // Update enemy flash timers
+            enemies.forEach(en => { if (en.flashTimer > 0) en.flashTimer -= dt; });
+
+            if (player.hp <= 0) { player.hp = 0; showDeathScreen(); return; }
             document.getElementById('hp-bar').style.width = Math.max(0, player.hp) + '%';
+            document.getElementById('enemy-counter').innerText = 'HOSTILES: ' + enemies.length;
         }
 
         // --- Reusable fog canvas ---
@@ -357,11 +483,30 @@
             }
             enemies.forEach(en => { 
                 ctx.save(); ctx.translate(en.x, en.y); ctx.rotate(en.pulse/2);
-                ctx.strokeStyle = en.color; ctx.lineWidth = en.type === 'sentry' ? 4 : 2;
+                const flashing = en.flashTimer > 0;
+                ctx.strokeStyle = flashing ? '#fff' : en.color;
+                ctx.lineWidth = en.type === 'sentry' ? 4 : 2;
+                if (flashing) { ctx.shadowBlur = 20; ctx.shadowColor = '#fff'; }
                 ctx.strokeRect(-en.size/2, -en.size/2, en.size, en.size);
-                if (en.type === 'sentry') { ctx.fillStyle = en.color; ctx.fillRect(-4, -4, 8, 8); }
+                if (flashing) {
+                    ctx.globalAlpha = 0.4;
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(-en.size/2, -en.size/2, en.size, en.size);
+                    ctx.globalAlpha = 1;
+                }
+                if (en.type === 'sentry') { ctx.fillStyle = flashing ? '#fff' : en.color; ctx.fillRect(-4, -4, 8, 8); }
+                ctx.shadowBlur = 0;
                 ctx.restore();
             });
+            // Draw particles
+            particles.forEach(p => {
+                const alpha = p.life / p.maxLife;
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = p.color;
+                ctx.shadowBlur = 8; ctx.shadowColor = p.color;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI*2); ctx.fill();
+            });
+            ctx.globalAlpha = 1; ctx.shadowBlur = 0;
             bullets.forEach(b => { ctx.fillStyle = b.color; ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, Math.PI*2); ctx.fill(); });
             enemyBullets.forEach(b => { ctx.fillStyle = '#f00'; ctx.shadowBlur = 10; ctx.shadowColor = '#f00'; ctx.beginPath(); ctx.arc(b.x, b.y, 5, 0, Math.PI*2); ctx.fill(); });
             activeRays.forEach(r => {
@@ -411,9 +556,9 @@
                     const spread = (i - (count-1)/2) * 0.15;
                     bullets.push({ x: player.x, y: player.y, angle: player.angle + spread, speed: w.speed, dmg: w.dmg, color: w.color });
                 }
-                playSfx(w.sfx, 'triangle', 0.1);
+                playSfx(w.sfx, 'triangle', 0.1, 0.2);
             } else {
-                const pts = castRay(player.x, player.y, player.angle, w.bounces, w.dmg);
+                const pts = castRay(player.x, player.y, player.angle, w.bounces, w.dmg, w.pierces || 0);
                 activeRays.push({ points: pts, color: w.color, life: w.duration, maxLife: w.duration, type: player.weapon });
                 playSfx(w.sfx, 'sine', 0.2, 0.1);
             }
@@ -480,6 +625,7 @@
 
         document.getElementById('start-btn').onclick = () => {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            music.play().catch(()=>{});
             document.getElementById('overlay').style.display = 'none';
             generateMap(); requestAnimationFrame(function l(t){ update(Math.min((t-lastTime)/1000, 0.1)); lastTime=t; draw(); requestAnimationFrame(l); });
         };

@@ -41,7 +41,7 @@
 // External BGM
 const music = new Audio("https://patrickdearteaga.com/audio/Intergalactic%20Odyssey.ogg");
 music.loop = true;
-music.volume = 0.5;
+music.volume = 0.1;
 
 document.addEventListener("click", () => {
     if (Game.state === 'START') music.play().catch(e => console.log("Audio play prevented:", e));
@@ -920,6 +920,15 @@ const Game = {
             }
         });
 
+        // Desktop click/tap to start
+        this.canvas.addEventListener('click', () => {
+            if (this.state === 'START' || this.state === 'GAMEOVER' || this.state === 'VICTORY') {
+                AudioEngine.init();
+                music.play().catch(e => console.log("Audio play prevented:", e));
+                this.startGame();
+            }
+        });
+
         // Mobile controls setup
         if (isMobile) {
             startTouch.style.display = 'block';
@@ -1021,8 +1030,10 @@ const Game = {
         this.state = newState;
         if (newState === 'INTRO') this.introTimer = 3;
         if (newState === 'GAMEOVER' || newState === 'VICTORY') {
-            const high = localStorage.getItem('ai_assault_hi') || 0;
-            if (this.player.score > high) localStorage.setItem('ai_assault_hi', this.player.score);
+            try {
+                const high = localStorage.getItem('ai_assault_hi') || 0;
+                if (this.player.score > high) localStorage.setItem('ai_assault_hi', this.player.score);
+            } catch(e) {}
         }
     },
 
@@ -1053,6 +1064,8 @@ const Game = {
         }
 
         if (this.state !== 'PLAYING') return;
+
+        if (Input.keys['Delete']) { Input.keys['Delete'] = false; this.nextBoss(); return; }
 
         this.player.multiplier += dt * 0.1; 
         this.player.update(dt);
@@ -1313,7 +1326,7 @@ const Game = {
 
             if (Math.floor(this.time * 2) % 2 === 0) {
                 ctx.fillStyle = '#fff'; ctx.font = 'bold 24px "Segoe UI", sans-serif';
-                ctx.fillText(isMobile ? 'TAP TO START' : 'PRESS ENTER TO START', CONFIG.WIDTH/2, 600);
+                ctx.fillText(isMobile ? 'TAP TO START' : 'TAP OR PRESS ENTER TO START', CONFIG.WIDTH/2, 600);
             }
             ctx.restore();
             return;
@@ -1421,7 +1434,7 @@ const Game = {
             ctx.fillText('SYSTEM FAILURE', CONFIG.WIDTH/2, CONFIG.HEIGHT/2 - 20);
             ctx.fillStyle = '#fff'; ctx.font = '20px "Segoe UI", sans-serif';
             ctx.fillText(`FINAL SCORE: ${Math.floor(this.player.score)}`, CONFIG.WIDTH/2, CONFIG.HEIGHT/2 + 30);
-            ctx.fillText(isMobile ? 'TAP TO RESTART' : 'PRESS ENTER TO RESTART', CONFIG.WIDTH/2, CONFIG.HEIGHT/2 + 70);
+            ctx.fillText(isMobile ? 'TAP TO RESTART' : 'TAP OR PRESS ENTER TO RESTART', CONFIG.WIDTH/2, CONFIG.HEIGHT/2 + 70);
             if (Input.keys['Enter']) this.startGame();
             if (isMobile) { const btn = document.getElementById('btn-start-touch'); if (btn) btn.style.display = 'block'; }
         }
@@ -1441,7 +1454,7 @@ const Game = {
             ctx.fillText(`RANK: ${rank}`, CONFIG.WIDTH/2, CONFIG.HEIGHT/2 + 80);
             
             ctx.fillStyle = '#fff'; ctx.font = '20px "Segoe UI", sans-serif';
-            ctx.fillText(isMobile ? 'TAP TO RESTART' : 'PRESS ENTER TO RESTART', CONFIG.WIDTH/2, CONFIG.HEIGHT/2 + 130);
+            ctx.fillText(isMobile ? 'TAP TO RESTART' : 'TAP OR PRESS ENTER TO RESTART', CONFIG.WIDTH/2, CONFIG.HEIGHT/2 + 130);
             if (Input.keys['Enter']) this.startGame();
             if (isMobile) { const btn = document.getElementById('btn-start-touch'); if (btn) btn.style.display = 'block'; }
         }
