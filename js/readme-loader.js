@@ -304,9 +304,16 @@
         });
         modal.classList.remove('active');
         var scrollY = parseInt(document.body.dataset.scrollY || '0', 10);
+        // Disable smooth scrolling so the restore is instant (no dizzy bounce)
+        var htmlEl = document.documentElement;
+        htmlEl.style.scrollBehavior = 'auto';
         document.body.classList.remove('readme-open');
         document.body.style.top = '';
         window.scrollTo(0, scrollY);
+        // Re-enable smooth scrolling on the next frame
+        requestAnimationFrame(function () {
+            htmlEl.style.scrollBehavior = '';
+        });
     }
 
     // ── Build project tile grid ───────────────────────────────────────
