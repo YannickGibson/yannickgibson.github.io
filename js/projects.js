@@ -59,6 +59,22 @@ const PROJECTS = [
         language: "Python",
         color: "#3572A5",
         repo: "smasher",
-        tags: ["Sockets", "Flask",]
+        tags: ["Sockets", "Flask"]
+    },
+    {
+        title: "Portfolio",
+        description: "Personal portfolio site with five playable HTML5 browser games built from scratch.",
+        language: "JavaScript",
+        color: "#f1e05a",
+        repo: "yannickgibson.github.io",
+        tags: ["Canvas", "Web Audio", "HTML5 Games"]
+    },
+    {
+        title: "AI Hackathon Template",
+        description: "Starter template for AI hackathons — pre-wired backend, frontend, and deployment scaffolding.",
+        language: "Python",
+        color: "#3572A5",
+        repo: "ai-hackathon-template",
+        tags: ["FastAPI", "Docker", "Template"]
     },
 ];

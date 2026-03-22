@@ -159,6 +159,14 @@ const AudioEngine = {
                 gain.gain.linearRampToValueAtTime(0, t + 0.05);
                 osc.start(t); osc.stop(t + 0.05);
                 break;
+            case 'beam':
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(55, t);
+                osc.frequency.linearRampToValueAtTime(40, t + 0.35);
+                gain.gain.setValueAtTime(0.25, t);
+                gain.gain.linearRampToValueAtTime(0, t + 0.35);
+                osc.start(t); osc.stop(t + 0.35);
+                break;
         }
     }
 };
@@ -298,14 +306,14 @@ const Particles = new Pool(CONFIG.MAX_PARTICLES, ParticleFactory);
 const Powerups = new Pool(20, PowerupFactory);
 const SpatialHash = new SpatialGrid(CONFIG.WIDTH, CONFIG.HEIGHT, CONFIG.CELL_SIZE);
 
-function spawnBullet(x, y, vx, vy, color, isEnemy = true, r = 4, type = 0, delay = 0, ax = 0, ay = 0) {
+function spawnBullet(x, y, vx, vy, color, isEnemy = true, r = 4, type = 0, delay = 0, ax = 0, ay = 0, silent = false) {
     const b = Bullets.get();
     if (!b) return;
     b.x = x; b.y = y; b.vx = vx; b.vy = vy; b.color = color;
     b.isEnemy = isEnemy; b.r = r; b.type = type; 
     b.life = 0; b.maxLife = type === 4 ? 0.5 : 10;
     b.delay = delay; b.ax = ax; b.ay = ay;
-    if (isEnemy && type !== 4) AudioEngine.playSFX('tick');
+    if (isEnemy && type !== 4 && !silent) AudioEngine.playSFX('tick');
 }
 
 function spawnParticles(x, y, count, color, speed, life) {
@@ -447,7 +455,7 @@ class Player {
         if (this.lives < 0) {
             Game.setState('GAMEOVER');
         } else {
-            Bullets.items.forEach(b => { if(b.active && b.isEnemy) spawnParticles(b.x, b.y, 2, b.color, 50, 0.5); b.active = false; });
+            Bullets.items.forEach(b => { if(b.active && b.isEnemy && b.type !== 4) { spawnParticles(b.x, b.y, 2, b.color, 50, 0.5); b.active = false; } else if(b.active && !b.isEnemy) { b.active = false; } });
             this.reset();
         }
     }
@@ -640,7 +648,7 @@ class SwarmBoss extends Boss {
                     const px = Game.player.x - dx;
                     const py = Game.player.y - dy;
                     const mag = Math.sqrt(px*px + py*py);
-                    spawnBullet(dx, dy, (px/mag)*200, (py/mag)*200, this.color);
+                    spawnBullet(dx, dy, (px/mag)*200, (py/mag)*200, this.color, true, 4, 0, 0, 0, 0, true);
                 }
             }
         });
@@ -651,6 +659,7 @@ class SwarmBoss extends Boss {
             if (this.laserTime <= 0) {
                 this.laserTime = 3;
                 spawnBullet(this.x, this.y, 0, 500, '#fff', true, 20, 4); 
+                AudioEngine.playSFX('beam');
                 Game.shake = 5;
             }
         }
@@ -718,7 +727,7 @@ class MirrorBoss extends Boss {
         this.drawBase(ctx, (c) => {
             c.beginPath(); c.moveTo(0, -40); c.lineTo(30, 20); c.lineTo(-30, 20); c.closePath(); c.fill();
         });
-        if (this.split) {
+        if (this.split && this.active) {
             ctx.save();
             ctx.translate(this.x2, this.y2);
             ctx.fillStyle = this.color;
@@ -1092,7 +1101,7 @@ const Game = {
             let p = Powerups.items[i];
             if (!p.active) continue;
             p.y += p.vy * dt;
-            p.angle += dt * 2;
+            p.angle += dt * 0.5;
             if (p.y > CONFIG.HEIGHT + 20) p.active = false;
 
             if ((p.x - this.player.x)**2 + (p.y - this.player.y)**2 < 1600) { 
@@ -1161,6 +1170,19 @@ const Game = {
 
             if (b.isEnemy) {
                 const px = this.player.x, py = this.player.y;
+
+                // Beam (type 4): rectangle collision — beam extends from b.y downward 800px
+                if (b.type === 4) {
+                    if (px > b.x - b.r && px < b.x + b.r && py > b.y && !this.player.bubbleShield) {
+                        this.player.hit();
+                    } else if (px > b.x - b.r && px < b.x + b.r && py > b.y && this.player.bubbleShield) {
+                        this.player.bubbleShieldHP--;
+                        spawnParticles(px, py, 10, '#00ffff', 100, 0.5);
+                        if (this.player.bubbleShieldHP <= 0) this.player.bubbleShield = false;
+                    }
+                    continue;
+                }
+
                 const distSq = (b.x - px)**2 + (b.y - py)**2;
                 
                 const toBulletAngle = Math.atan2(b.y - py, b.x - px);
@@ -1227,7 +1249,7 @@ const Game = {
                                 this.boss.hit(b.type === 5 ? 4 : 10); // Flamethrower double damage
                                 spawnParticles(b.x, b.y, b.type === 5 ? 1 : 3, this.boss.color, 50, 0.2);
                             } else {
-                                if (b.type !== 5) AudioEngine.playSFX('parry'); 
+                                spawnParticles(b.x, b.y, 2, '#0ff', 100, 0.2);
                             }
                         } else {
                             if (b.type !== 5) spawnParticles(b.x, b.y, 2, '#0ff', 100, 0.2);
@@ -1262,7 +1284,6 @@ const Game = {
                                 spawnParticles(b.x, b.y, 2, this.boss.color, 50, 0.2);
                                 if (d.hp <= 0) {
                                     spawnParticles(dx, dy, 20, this.boss.color, 150, 0.5);
-                                    AudioEngine.playSFX('bossHit');
                                     this.player.score += 500;
                                 }
                             }
@@ -1364,6 +1385,8 @@ const Game = {
         for (let i = 0; i < Powerups.items.length; i++) {
             const p = Powerups.items[i];
             if (!p.active) continue;
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
             ctx.save();
             ctx.translate(p.x, p.y);
             ctx.rotate(p.angle);
@@ -1429,7 +1452,30 @@ const Game = {
         }
 
         if (this.state === 'GAMEOVER') {
+            // Keep beam bullets ticking so they render during death
+            const gdt = 1/CONFIG.FPS;
+            for (let i = 0; i < Bullets.items.length; i++) {
+                const b = Bullets.items[i];
+                if (!b.active || b.type !== 4) continue;
+                b.life += gdt;
+                if (b.life > b.maxLife) b.active = false;
+            }
+
             ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(0,0,CONFIG.WIDTH, CONFIG.HEIGHT);
+
+            // Draw surviving beam bullets on top of overlay so player sees what killed them
+            ctx.globalCompositeOperation = 'lighter';
+            for (let i = 0; i < Bullets.items.length; i++) {
+                const b = Bullets.items[i];
+                if (!b.active || b.type !== 4) continue;
+                const alpha = 1 - (b.life / b.maxLife);
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = b.color;
+                ctx.fillRect(b.x - b.r, b.y, b.r*2, 800);
+            }
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
+
             ctx.fillStyle = '#f00'; ctx.textAlign = 'center'; ctx.font = 'bold 40px "Segoe UI", sans-serif';
             ctx.fillText('SYSTEM FAILURE', CONFIG.WIDTH/2, CONFIG.HEIGHT/2 - 20);
             ctx.fillStyle = '#fff'; ctx.font = '20px "Segoe UI", sans-serif';

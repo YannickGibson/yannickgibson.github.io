@@ -163,6 +163,39 @@ body {
   padding-bottom: 8px;
 }
 
+/* ── Contact Me CTA (hero) ─────────────────────────────────────────── */
+.contact-cta {
+  display: inline-block;
+  padding: 16px 48px;
+  background: linear-gradient(135deg, #00D2FF, #0090B5);
+  border: none;
+  border-radius: 50px;
+  color: #fff !important;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-decoration: none !important;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 20px rgba(0, 210, 255, 0.4), 0 0 60px rgba(0, 210, 255, 0.15);
+  animation: cta-pulse 2s ease-in-out infinite;
+}
+
+.contact-cta:hover {
+  background: linear-gradient(135deg, #00E5FF, #00B8E6);
+  color: #fff !important;
+  box-shadow: 0 0 30px rgba(0, 210, 255, 0.6), 0 0 80px rgba(0, 210, 255, 0.25);
+  transform: translateY(-3px) scale(1.04);
+}
+
+.contact-cta i {
+  margin-right: 6px;
+}
+
+@keyframes cta-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(0, 210, 255, 0.4), 0 0 60px rgba(0, 210, 255, 0.15); }
+  50% { box-shadow: 0 0 28px rgba(0, 210, 255, 0.55), 0 0 80px rgba(0, 210, 255, 0.25); }
+}
+
 .cta-btn {
   display: inline-block;
   padding: 12px 32px;
@@ -180,18 +213,6 @@ body {
   color: #fff !important;
   box-shadow: 0 4px 20px rgba(0, 210, 255, 0.3);
   transform: translateY(-2px);
-}
-
-/* Typed.js cursor */
-.typed-cursor {
-  opacity: 1;
-  color: #00D2FF;
-}
-.typed-cursor.typed-cursor--blink {
-  animation: typedjsBlink 0.7s infinite;
-}
-@keyframes typedjsBlink {
-  50% { opacity: 0; }
 }
 
 /* ── Layout utilities ──────────────────────────────────────────────── */
