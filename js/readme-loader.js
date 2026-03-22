@@ -263,7 +263,10 @@
         modalBody.innerHTML =
             '<div class="readme-loading"><div class="spinner"></div> Loading README&hellip;</div>';
         modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
+        var scrollY = window.scrollY;
+        document.body.classList.add('readme-open');
+        document.body.style.top = '-' + scrollY + 'px';
+        document.body.dataset.scrollY = scrollY;
 
         fetchReadme(owner, project.repo)
             .then(function (md) {
@@ -300,7 +303,10 @@
             el.currentTime = 0;
         });
         modal.classList.remove('active');
-        document.body.style.overflow = '';
+        var scrollY = parseInt(document.body.dataset.scrollY || '0', 10);
+        document.body.classList.remove('readme-open');
+        document.body.style.top = '';
+        window.scrollTo(0, scrollY);
     }
 
     // ── Build project tile grid ───────────────────────────────────────

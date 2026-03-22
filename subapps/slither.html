@@ -156,7 +156,7 @@
             <ol id="leaderboard-list"></ol>
         </div>
         <div id="shoot-hint">Press Space to Shoot</div>
-        <div style="position:fixed;bottom:36px;right:10px;font-size:11px;color:rgba(255,255,255,0.35);z-index:10;pointer-events:auto;">Music by <a href="https://patrickdearteaga.com" target="_blank" style="color:rgba(255,255,255,0.5);text-decoration:none;">Patrick de Arteaga</a></div>
+        <div style="position:fixed;bottom:8px;right:10px;font-size:11px;color:rgba(255,255,255,0.35);z-index:10;pointer-events:auto;">Music by <a href="https://patrickdearteaga.com" target="_blank" style="color:rgba(255,255,255,0.5);text-decoration:none;">Patrick de Arteaga</a></div>
         <div id="game-over">
             <h1>Game Over!</h1>
             <p>Final Length: <span id="final-score"></span></p>
@@ -256,7 +256,7 @@
             canvas.width = width;
             canvas.height = height;
             // Zoom out on mobile devices
-            camera.zoom = width < 768 ? 0.6 : 1.0;
+            camera.zoom = width < 768 ? 0.45 : 1.0;
         }
         window.addEventListener('resize', resize);
 

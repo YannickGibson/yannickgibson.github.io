@@ -174,12 +174,12 @@ const AudioEngine = {
 // ==========================================
 // INPUT MANAGER
 // ==========================================
-const isMobile = ('ontouchstart' in window) && window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
 const Input = {
     keys: {},
     mouse: { x: CONFIG.WIDTH/2, y: CONFIG.HEIGHT/2, down: false, rightDown: false },
-    touch: { active: false, startX: 0, startY: 0, moveId: null, dx: 0, dy: 0 },
+    touch: { active: false, moveId: null, x: 0, y: 0, offsetX: 0, offsetY: 0 },
     init(canvas) {
         window.addEventListener('keydown', e => { this.keys[e.code] = true; });
         window.addEventListener('keyup', e => { this.keys[e.code] = false; });
@@ -198,16 +198,21 @@ const Input = {
         });
         canvas.addEventListener('contextmenu', e => e.preventDefault());
 
-        // Mobile touch: drag anywhere on canvas to move, auto-fire
+        // Mobile touch: drag anywhere to move ship, auto-fire while touching
         if (isMobile) {
             canvas.addEventListener('touchstart', e => {
                 e.preventDefault();
                 const t = e.changedTouches[0];
+                const rect = canvas.getBoundingClientRect();
+                const tx = (t.clientX - rect.left) * (CONFIG.WIDTH / rect.width);
+                const ty = (t.clientY - rect.top) * (CONFIG.HEIGHT / rect.height);
                 this.touch.active = true;
                 this.touch.moveId = t.identifier;
-                const rect = canvas.getBoundingClientRect();
-                this.touch.startX = (t.clientX - rect.left) * (CONFIG.WIDTH / rect.width);
-                this.touch.startY = (t.clientY - rect.top) * (CONFIG.HEIGHT / rect.height);
+                // Offset so ship doesn't jump to finger
+                this.touch.offsetX = (window._playerX || CONFIG.WIDTH / 2) - tx;
+                this.touch.offsetY = (window._playerY || CONFIG.HEIGHT - 100) - ty;
+                this.touch.x = tx;
+                this.touch.y = ty;
                 this.mouse.down = true;
             }, { passive: false });
             canvas.addEventListener('touchmove', e => {
@@ -216,12 +221,8 @@ const Input = {
                     const t = e.changedTouches[i];
                     if (t.identifier === this.touch.moveId) {
                         const rect = canvas.getBoundingClientRect();
-                        const cx = (t.clientX - rect.left) * (CONFIG.WIDTH / rect.width);
-                        const cy = (t.clientY - rect.top) * (CONFIG.HEIGHT / rect.height);
-                        this.touch.dx = cx - this.touch.startX;
-                        this.touch.dy = cy - this.touch.startY;
-                        this.touch.startX = cx;
-                        this.touch.startY = cy;
+                        this.touch.x = (t.clientX - rect.left) * (CONFIG.WIDTH / rect.width);
+                        this.touch.y = (t.clientY - rect.top) * (CONFIG.HEIGHT / rect.height);
                     }
                 }
             }, { passive: false });
@@ -230,8 +231,6 @@ const Input = {
                     if (e.changedTouches[i].identifier === this.touch.moveId) {
                         this.touch.active = false;
                         this.touch.moveId = null;
-                        this.touch.dx = 0;
-                        this.touch.dy = 0;
                         this.mouse.down = false;
                     }
                 }
@@ -239,8 +238,6 @@ const Input = {
             canvas.addEventListener('touchcancel', e => {
                 this.touch.active = false;
                 this.touch.moveId = null;
-                this.touch.dx = 0;
-                this.touch.dy = 0;
                 this.mouse.down = false;
             });
         }
@@ -362,12 +359,13 @@ class Player {
         
         let dx = 0, dy = 0;
 
-        // Touch drag: directly move player by touch delta
+        // Touch: ship follows finger position (with offset so it doesn't jump)
         if (isMobile && Input.touch.active) {
-            this.x += Input.touch.dx;
-            this.y += Input.touch.dy;
-            Input.touch.dx = 0;
-            Input.touch.dy = 0;
+            this.x = Input.touch.x + Input.touch.offsetX;
+            this.y = Input.touch.y + Input.touch.offsetY;
+            // Expose position so next touchstart can compute correct offset
+            window._playerX = this.x;
+            window._playerY = this.y;
         } else {
             if (Input.keys['KeyW'] || Input.keys['ArrowUp']) dy -= 1;
             if (Input.keys['KeyS'] || Input.keys['ArrowDown']) dy += 1;
@@ -385,6 +383,8 @@ class Player {
         
         this.x = Math.max(10, Math.min(CONFIG.WIDTH - 10, this.x));
         this.y = Math.max(10, Math.min(CONFIG.HEIGHT - 10, this.y));
+        window._playerX = this.x;
+        window._playerY = this.y;
 
         this.shieldAngle = Math.atan2(Input.mouse.y - this.y, Input.mouse.x - this.x);
         

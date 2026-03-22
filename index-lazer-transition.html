@@ -82,21 +82,7 @@
         to { opacity: 1; transform: translateY(0); }
       }
 
-      /* Glitch effect for hero name */
-      .glitch-in {
-        opacity: 1 !important;
-        transform: translateY(0) !important;
-        animation: glitch 0.5s steps(2, end);
-      }
-
-      @keyframes glitch {
-        0%   { clip-path: inset(0 0 80% 0); transform: translate(-4px, 0); opacity: 0.8; }
-        20%  { clip-path: inset(20% 0 40% 0); transform: translate(4px, 0); opacity: 1; }
-        40%  { clip-path: inset(60% 0 0 0); transform: translate(-2px, 0); opacity: 0.9; }
-        60%  { clip-path: inset(0 0 50% 0); transform: translate(2px, 0); opacity: 1; }
-        80%  { clip-path: inset(30% 0 10% 0); transform: translate(0, 0); opacity: 0.95; }
-        100% { clip-path: inset(0); transform: translate(0, 0); opacity: 1; }
-      }
+      /* Glitch effect for hero name — removed */
 
       /* Nav drop-down */
       .pill-nav.intro-hidden {
@@ -241,7 +227,9 @@
         (function () {
             var container = document.getElementById('games-grid');
             if (!container || typeof SUBAPPS === 'undefined') return;
+            var isMobile = 'ontouchstart' in window && window.innerWidth <= 768;
             SUBAPPS.forEach(function (app) {
+                if (isMobile && !app.mobile) return;
                 var card = document.createElement('a');
                 card.href = 'player.html?app=' + encodeURIComponent(app.path);
                 card.className = 'game-card animate-on-scroll';
@@ -340,10 +328,10 @@
         line.remove();
         if (hint) hint.remove();
 
-        /* Name with glitch */
+        /* Name with smooth reveal */
         var name = document.getElementById('hero-name');
         name.classList.remove('intro-hidden');
-        name.classList.add('glitch-in');
+        name.classList.add('intro-reveal');
 
         /* Stagger remaining hero elements */
         var stagger = [

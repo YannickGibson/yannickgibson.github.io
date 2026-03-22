@@ -199,6 +199,39 @@
       });
     })();
     </script>
+
+    <!-- ══════════ CLICK RIPPLE EFFECT ══════════ -->
+    <script>
+    (function () {
+      var style = document.createElement('style');
+      style.textContent =
+        '@keyframes click-ripple {' +
+        '  0%   { transform: translate(-50%,-50%) scale(0); opacity: 0.5; }' +
+        '  100% { transform: translate(-50%,-50%) scale(1); opacity: 0; }' +
+        '}' +
+        '.click-ripple {' +
+        '  position: fixed;' +
+        '  width: 300px; height: 300px;' +
+        '  border-radius: 50%;' +
+        '  pointer-events: none;' +
+        '  z-index: 1;' +
+        '  background: radial-gradient(circle, rgba(0,210,255,0.25) 0%, transparent 70%);' +
+        '  animation: click-ripple 0.6s ease-out forwards;' +
+        '}';
+      document.head.appendChild(style);
+
+      document.addEventListener('click', function (e) {
+        /* Don't ripple on interactive elements */
+        if (e.target.closest('a, button, input, textarea, select, nav, .readme-modal')) return;
+        var ripple = document.createElement('div');
+        ripple.className = 'click-ripple';
+        ripple.style.left = e.clientX + 'px';
+        ripple.style.top  = e.clientY + 'px';
+        document.body.appendChild(ripple);
+        ripple.addEventListener('animationend', function () { ripple.remove(); });
+      });
+    })();
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
@@ -210,7 +243,9 @@
         (function () {
             var container = document.getElementById('games-grid');
             if (!container || typeof SUBAPPS === 'undefined') return;
+            var isMobile = 'ontouchstart' in window && window.innerWidth <= 768;
             SUBAPPS.forEach(function (app) {
+                if (isMobile && !app.mobile) return;
                 var card = document.createElement('a');
                 card.href = 'player.html?app=' + encodeURIComponent(app.path);
                 card.className = 'game-card animate-on-scroll';
@@ -251,7 +286,7 @@
       var LEAD_FAST     = 0.85;
       var LEAD_AMBIENT  = 0.40;
       var FADE_FAST     = 0.10;
-      var FADE_AMBIENT  = 0.04;
+      var FADE_AMBIENT  = 0.09;
 
       var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'.split('');
 
@@ -331,7 +366,6 @@
             canvas.style.background = 'rgba(10, 14, 26, ' + bgAlpha.toFixed(3) + ')';
           } else {
             canvas.style.background = 'transparent';
-            canvas.style.zIndex = '0';
             bgCleared = true;
           }
         }
@@ -344,12 +378,19 @@
           var y = dropPos[i];
 
           if (y > -FONT_SIZE && y < h + FONT_SIZE) {
+            /* Lead character (brightest) */
             ctx.fillStyle = 'rgba(0, 210, 255, ' + curLead.toFixed(3) + ')';
             ctx.fillText(chars[Math.floor(Math.random() * chars.length)], x, y);
 
-            if (y > FONT_SIZE) {
-              ctx.fillStyle = 'rgba(0, 210, 255, ' + (curLead * 0.25).toFixed(4) + ')';
-              ctx.fillText(chars[Math.floor(Math.random() * chars.length)], x, y - FONT_SIZE);
+            /* Extended trail behind the lead */
+            var trailLen = 5;
+            for (var j = 1; j <= trailLen; j++) {
+              var ty = y - j * FONT_SIZE;
+              if (ty > 0 && ty < h) {
+                var trailAlpha = curLead * (1 - j / (trailLen + 1)) * 0.35;
+                ctx.fillStyle = 'rgba(0, 210, 255, ' + trailAlpha.toFixed(4) + ')';
+                ctx.fillText(chars[Math.floor(Math.random() * chars.length)], x, ty);
+              }
             }
           }
 
@@ -378,6 +419,7 @@
       /* ── Show content instantly (no animation) ─────────── */
       function showContentNow() {
         if (hint) hint.remove();
+        canvas.style.zIndex = '0';
 
         var nav = document.querySelector('.pill-nav');
         nav.classList.remove('intro-hidden');
@@ -397,7 +439,10 @@
         canvas.style.zIndex = '0';
         bgCleared = true;
         revealed  = true;
-        /* Scatter drops across the full screen so it looks pre-filled */
+        skipped   = true;
+        document.removeEventListener('click', skipAll);
+        document.removeEventListener('keydown', skipAll);
+        /* Scatter drops so ambient rain is already visible */
         for (var i = 0; i < columns; i++) {
           dropPos[i] = Math.random() * h;
         }
@@ -408,6 +453,9 @@
       function revealHero() {
         document.removeEventListener('click', skipAll);
         document.removeEventListener('keydown', skipAll);
+
+        /* Drop rain canvas behind content so characters don't overlay the image */
+        canvas.style.zIndex = '0';
 
         /* Name slides from left */
         var name = document.getElementById('hero-name');

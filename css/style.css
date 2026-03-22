@@ -139,11 +139,27 @@ body {
 }
 
 .hero-img {
-  width: 80%;
-  max-width: 420px;
+  width: 65%;
+  max-width: 340px;
   height: auto;
-  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.1));
-  animation: float 6s ease-in-out infinite;
+  border-radius: 50%;
+  border: 3px solid rgba(0, 210, 255, 0.35);
+  box-shadow:
+    0 0 15px rgba(0, 210, 255, 0.2),
+    0 0 40px rgba(0, 210, 255, 0.08),
+    inset 0 0 20px rgba(0, 210, 255, 0.05);
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.3));
+  animation: float 6s ease-in-out infinite, frame-pulse 4s ease-in-out infinite;
+  /* Make image unselectable / undraggable — feels like part of the background */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+@keyframes frame-pulse {
+  0%, 100% { border-color: rgba(0, 210, 255, 0.35); box-shadow: 0 0 15px rgba(0, 210, 255, 0.2), 0 0 40px rgba(0, 210, 255, 0.08); }
+  50%      { border-color: rgba(0, 210, 255, 0.55); box-shadow: 0 0 25px rgba(0, 210, 255, 0.3), 0 0 60px rgba(0, 210, 255, 0.12); }
 }
 
 @keyframes float {
@@ -450,6 +466,13 @@ p {
 .readme-modal.active {
   opacity: 1;
   visibility: visible;
+}
+
+/* Lock background scroll when modal is open */
+body.readme-open {
+  position: fixed;
+  overflow-y: scroll;
+  width: 100%;
 }
 
 .readme-modal-backdrop {
@@ -853,7 +876,7 @@ footer p {
   }
 
   .hero-img {
-    width: 60%;
+    width: 50%;
     margin-top: 40px;
   }
 

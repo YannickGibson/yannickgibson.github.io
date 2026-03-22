@@ -531,12 +531,19 @@
         }
     }
 
-    // Button Listeners
-    document.getElementById('start-btn').addEventListener('click', () => { currentLevel = 1; startGame(); });
-    document.getElementById('restart-btn').addEventListener('click', () => { currentLevel = 1; startGame(); });
-    document.getElementById('next-level-btn').addEventListener('click', () => { currentLevel++; startGame(); });
-    document.getElementById('victory-restart-btn').addEventListener('click', () => {
-        location.reload(); // Hard reset
+    // Button Listeners — use both click and touchend for mobile reliability
+    function addTapListener(el, fn) {
+        el.addEventListener('click', fn);
+        el.addEventListener('touchend', function (e) {
+            e.preventDefault();
+            fn();
+        }, { passive: false });
+    }
+    addTapListener(document.getElementById('start-btn'), function () { currentLevel = 1; startGame(); });
+    addTapListener(document.getElementById('restart-btn'), function () { currentLevel = 1; startGame(); });
+    addTapListener(document.getElementById('next-level-btn'), function () { currentLevel++; startGame(); });
+    addTapListener(document.getElementById('victory-restart-btn'), function () {
+        location.reload();
     });
 
     // Initial dark draw

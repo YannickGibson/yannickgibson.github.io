@@ -170,7 +170,7 @@
             document.getElementById('level-text').innerText = `SEC_${level < 10 ? '0' + level : level}`;
             document.getElementById('progress-bar-inner').style.width = ((level - 1) / MAX_SECTORS * 100) + '%';
             if (level < 10)
-                N_ENEMIES = -2 + (level * 2)
+                N_ENEMIES = (level * 2)
             else
                 N_ENEMIES = 70
             let spawnAttempts = 0;
