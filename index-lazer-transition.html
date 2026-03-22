@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap 5.3 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <!-- highlight.js dark theme -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <!-- KaTeX -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <!-- Site styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="assets/icons/favicon.ico">
+    <title>Yannick Daniel Gibson</title>
+
+    <!-- ══════════ OPTION B: Cinematic Split Reveal ══════════ -->
+    <style>
+      /* ── Split overlay panels ──────────────────────────────────── */
+      .split-top, .split-bottom {
+        position: fixed;
+        left: 0;
+        width: 100%;
+        height: 50%;
+        z-index: 9999;
+        background: #0a0e1a;
+        transition: transform 0.9s cubic-bezier(0.77, 0, 0.175, 1);
+        will-change: transform;
+      }
+      .split-top    { top: 0; }
+      .split-bottom { bottom: 0; }
+
+      .split-top.open    { transform: translateY(-100%); }
+      .split-bottom.open { transform: translateY(100%); }
+
+      .split-top.removed, .split-bottom.removed { display: none; }
+
+      /* ── Cyan center line ──────────────────────────────────────── */
+      .split-line {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 0;
+        height: 3px;
+        background: #00D2FF;
+        box-shadow: 0 0 20px rgba(0, 210, 255, 0.8), 0 0 60px rgba(0, 210, 255, 0.4);
+        z-index: 10000;
+        border-radius: 2px;
+        transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+      }
+
+      .split-line.expand {
+        width: 100vw;
+      }
+
+      .split-line.pulse {
+        animation: linePulse 0.3s ease;
+      }
+
+      @keyframes linePulse {
+        0%   { box-shadow: 0 0 20px rgba(0, 210, 255, 0.8), 0 0 60px rgba(0, 210, 255, 0.4); height: 3px; }
+        50%  { box-shadow: 0 0 40px rgba(0, 210, 255, 1), 0 0 120px rgba(0, 210, 255, 0.7); height: 5px; }
+        100% { box-shadow: 0 0 20px rgba(0, 210, 255, 0.8), 0 0 60px rgba(0, 210, 255, 0.4); height: 3px; }
+      }
+
+      .split-line.fade { opacity: 0; }
+
+      /* ── Hero stagger animations ──────────────────────────────── */
+      .intro-hidden { opacity: 0; transform: translateY(24px); }
+
+      .intro-reveal {
+        animation: introReveal 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+
+      @keyframes introReveal {
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      /* Glitch effect for hero name */
+      .glitch-in {
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+        animation: glitch 0.5s steps(2, end);
+      }
+
+      @keyframes glitch {
+        0%   { clip-path: inset(0 0 80% 0); transform: translate(-4px, 0); opacity: 0.8; }
+        20%  { clip-path: inset(20% 0 40% 0); transform: translate(4px, 0); opacity: 1; }
+        40%  { clip-path: inset(60% 0 0 0); transform: translate(-2px, 0); opacity: 0.9; }
+        60%  { clip-path: inset(0 0 50% 0); transform: translate(2px, 0); opacity: 1; }
+        80%  { clip-path: inset(30% 0 10% 0); transform: translate(0, 0); opacity: 0.95; }
+        100% { clip-path: inset(0); transform: translate(0, 0); opacity: 1; }
+      }
+
+      /* Nav drop-down */
+      .pill-nav.intro-hidden {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-30px);
+      }
+
+      .pill-nav.intro-nav-reveal {
+        animation: navDrop 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+
+      @keyframes navDrop {
+        to { opacity: 1; transform: translateX(-50%) translateY(0); }
+      }
+
+      /* Skip hint */
+      .skip-hint {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 12px;
+        color: rgba(0, 210, 255, 0.35);
+        letter-spacing: 2px;
+        font-family: 'Courier New', monospace;
+        z-index: 10001;
+        pointer-events: none;
+      }
+
+      .skip-hint.hidden { opacity: 0; transition: opacity 0.3s; }
+
+      /* Accessibility */
+      @media (prefers-reduced-motion: reduce) {
+        .split-top, .split-bottom, .split-line, .skip-hint { display: none !important; }
+        .intro-hidden { opacity: 1 !important; transform: none !important; }
+        .pill-nav.intro-hidden { opacity: 1 !important; transform: translateX(-50%) !important; }
+      }
+    </style>
+</head>
+<body>
+    <!-- ══════════ CINEMATIC SPLIT OVERLAY ══════════ -->
+    <div class="split-top" id="split-top"></div>
+    <div class="split-bottom" id="split-bottom"></div>
+    <div class="split-line" id="split-line"></div>
+    <div class="skip-hint" id="skip-hint">CLICK OR PRESS ANY KEY TO SKIP</div>
+
+    <!-- Particles background -->
+    <div id="particles"></div>
+    <div id="vignette"></div>
+    <div id="cursor-spotlight"></div>
+
+    <!-- Floating pill nav -->
+    <nav class="pill-nav intro-hidden">
+        <a href="#hero">Home</a>
+        <a href="#projects">Projects</a>
+        <a href="#games">Games</a>
+        <span class="pill-nav-divider"></span>
+        <a href="https://github.com/YannickGibson" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+            <i class="fab fa-github"></i>
+        </a>
+        <a href="https://www.linkedin.com/in/yannick-gibson" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+            <i class="fab fa-linkedin"></i>
+        </a>
+    </nav>
+
+    <!-- Hero -->
+    <section id="hero">
+        <div class="container">
+            <div class="row align-items-center hero-row">
+                <div class="col-lg-7 center verticalHorizonCenter animate-on-scroll">
+                    <h1 class="name-heading intro-hidden" id="hero-name"><b>Yannick Daniel Gibson</b></h1>
+                    <h2 class="mt-3 intro-hidden" id="hero-sub">Personal Portfolio</h2>
+                    <hr class="hero-divider intro-hidden" id="hero-hr">
+                    <a href="https://www.linkedin.com/in/yannick-gibson" target="_blank" rel="noopener noreferrer" class="contact-cta mt-4 intro-hidden" id="hero-cta1">
+                        <i class="fab fa-linkedin"></i> Contact Me!
+                    </a>
+                    <a href="#projects" class="cta-btn mt-3 intro-hidden" id="hero-cta2">
+                        <i class="fas fa-arrow-down"></i> Explore Projects
+                    </a>
+                </div>
+                <div class="col-lg-5 verticalHorizonCenter animate-on-scroll">
+                    <img class="hero-img intro-hidden" id="hero-img" src="assets/media/me.png" alt="Developer illustration">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Projects -->
+    <section id="projects">
+        <div class="container">
+            <h2 class="section-title animate-on-scroll">
+                <i class="fas fa-code"></i> Projects
+            </h2>
+            <p class="section-subtitle animate-on-scroll">Click a project to read its README — fetched live from GitHub.</p>
+            <div class="projects-grid" id="projects-grid"></div>
+        </div>
+    </section>
+
+    <!-- Games -->
+    <section id="games">
+        <div class="container">
+            <h2 class="section-title animate-on-scroll">
+                <i class="fas fa-gamepad"></i> Try my games on the web
+            </h2>
+            <div id="games-grid"></div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container center">
+            <a href="https://github.com/YannickGibson" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-github"></i>
+            </a>
+            <a href="https://www.linkedin.com/in/yannick-gibson" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-linkedin"></i>
+            </a>
+            <p>&copy; 2026 Yannick Daniel Gibson</p>
+        </div>
+    </footer>
+
+    <!-- README Modal -->
+    <div class="readme-modal" id="readmeModal">
+        <div class="readme-modal-backdrop"></div>
+        <div class="readme-modal-content">
+            <button class="readme-modal-close" aria-label="Close">&times;</button>
+            <div class="readme-modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/particles.js"></script>
+    <script src="js/app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="js/projects.js"></script>
+    <script src="js/readme-loader.js"></script>
+    <script src="js/subapps.js"></script>
+    <script>
+        (function () {
+            var container = document.getElementById('games-grid');
+            if (!container || typeof SUBAPPS === 'undefined') return;
+            SUBAPPS.forEach(function (app) {
+                var card = document.createElement('a');
+                card.href = 'player.html?app=' + encodeURIComponent(app.path);
+                card.className = 'game-card animate-on-scroll';
+                card.innerHTML =
+                    (app.image ? '<img class="game-card-thumb" src="' + app.image + '" alt="' + app.title + '">' : '') +
+                    '<div class="game-card-body">' +
+                    '  <span class="game-card-title">' + app.title + '</span>' +
+                    '  <span class="game-card-desc">' + app.description + '</span>' +
+                    '  <span class="game-card-play"><i class="fas fa-play"></i> Play</span>' +
+                    '</div>';
+                container.appendChild(card);
+            });
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
+    <!-- ══════════ CINEMATIC SPLIT ANIMATION SCRIPT ══════════ -->
+    <script>
+    (function () {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      if (sessionStorage.getItem('intro-b-played')) {
+        skipInstantly();
+        return;
+      }
+
+      var splitTop  = document.getElementById('split-top');
+      var splitBot  = document.getElementById('split-bottom');
+      var line      = document.getElementById('split-line');
+      var hint      = document.getElementById('skip-hint');
+      var skipped   = false;
+      var timers    = [];
+
+      function skipAll() {
+        if (skipped) return;
+        skipped = true;
+        timers.forEach(clearTimeout);
+        skipInstantly();
+      }
+
+      document.addEventListener('click', skipAll, { once: true });
+      document.addEventListener('keydown', skipAll, { once: true });
+
+      function skipInstantly() {
+        ['split-top','split-bottom','split-line','skip-hint'].forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) el.remove();
+        });
+
+        var nav = document.querySelector('.pill-nav');
+        nav.classList.remove('intro-hidden');
+        nav.style.opacity = '1';
+        nav.style.transform = 'translateX(-50%)';
+
+        ['hero-name','hero-sub','hero-hr','hero-cta1','hero-cta2','hero-img'].forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) { el.classList.remove('intro-hidden'); el.style.opacity = '1'; el.style.transform = 'none'; }
+        });
+
+        sessionStorage.setItem('intro-b-played', '1');
+      }
+
+      function schedule(fn, delay) {
+        timers.push(setTimeout(function () { if (!skipped) fn(); }, delay));
+      }
+
+      var t = 0;
+
+      /* Phase 1: Cyan line appears and expands (0.6s) */
+      schedule(function () {
+        line.classList.add('expand');
+      }, t += 300);
+
+      /* Phase 2: Line pulses once */
+      schedule(function () {
+        line.classList.add('pulse');
+      }, t += 700);
+
+      /* Phase 3: Panels split open */
+      schedule(function () {
+        splitTop.classList.add('open');
+        splitBot.classList.add('open');
+        hint.classList.add('hidden');
+      }, t += 400);
+
+      /* Phase 4: Line fades */
+      schedule(function () {
+        line.classList.add('fade');
+      }, t += 500);
+
+      /* Phase 5: Clean up overlays, start hero reveal */
+      schedule(function () {
+        splitTop.remove();
+        splitBot.remove();
+        line.remove();
+        if (hint) hint.remove();
+
+        /* Name with glitch */
+        var name = document.getElementById('hero-name');
+        name.classList.remove('intro-hidden');
+        name.classList.add('glitch-in');
+
+        /* Stagger remaining hero elements */
+        var stagger = [
+          { id: 'hero-sub',  delay: 350 },
+          { id: 'hero-hr',   delay: 500 },
+          { id: 'hero-cta1', delay: 650 },
+          { id: 'hero-cta2', delay: 800 },
+          { id: 'hero-img',  delay: 400 }
+        ];
+
+        stagger.forEach(function (item) {
+          setTimeout(function () {
+            var el = document.getElementById(item.id);
+            if (el) {
+              el.classList.remove('intro-hidden');
+              el.classList.add('intro-reveal');
+            }
+          }, item.delay);
+        });
+
+        /* Nav drops in */
+        setTimeout(function () {
+          var nav = document.querySelector('.pill-nav');
+          nav.classList.add('intro-nav-reveal');
+        }, 250);
+
+        sessionStorage.setItem('intro-b-played', '1');
+      }, t += 600);
+
+    })();
+    </script>
+</body>
+</html>
