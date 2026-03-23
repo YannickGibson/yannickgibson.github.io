@@ -203,6 +203,7 @@
     }
 
     function playDrone() {
+        if (!audioCtx) return;
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'sine';
@@ -217,6 +218,7 @@
     }
 
     function playSoulCollect() {
+        if (!audioCtx) return;
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'sine';
@@ -233,6 +235,7 @@
     }
 
     function playJumpScare() {
+        if (!audioCtx) return;
         // Terrifying dissonant cluster
         const freqs = [100, 150, 212, 330, 415];
         const masterGain = audioCtx.createGain();
@@ -280,7 +283,7 @@
     }
 
     function startGame() {
-        initAudio();
+        try { initAudio(); } catch(_) {}
         gameState = 'play';
         score = 0;
         

@@ -200,7 +200,9 @@ const Input = {
 
         // Mobile touch: drag anywhere to move ship, auto-fire while touching
         if (isMobile) {
-            canvas.addEventListener('touchstart', e => {
+            document.addEventListener('touchstart', e => {
+                // Don't hijack touches on UI buttons
+                if (e.target.closest && e.target.closest('.touch-btn, #btn-start-touch')) return;
                 e.preventDefault();
                 const t = e.changedTouches[0];
                 const rect = canvas.getBoundingClientRect();
@@ -215,7 +217,7 @@ const Input = {
                 this.touch.y = ty;
                 this.mouse.down = true;
             }, { passive: false });
-            canvas.addEventListener('touchmove', e => {
+            document.addEventListener('touchmove', e => {
                 e.preventDefault();
                 for (let i = 0; i < e.changedTouches.length; i++) {
                     const t = e.changedTouches[i];
@@ -226,7 +228,7 @@ const Input = {
                     }
                 }
             }, { passive: false });
-            canvas.addEventListener('touchend', e => {
+            document.addEventListener('touchend', e => {
                 for (let i = 0; i < e.changedTouches.length; i++) {
                     if (e.changedTouches[i].identifier === this.touch.moveId) {
                         this.touch.active = false;
@@ -235,7 +237,7 @@ const Input = {
                     }
                 }
             });
-            canvas.addEventListener('touchcancel', e => {
+            document.addEventListener('touchcancel', e => {
                 this.touch.active = false;
                 this.touch.moveId = null;
                 this.mouse.down = false;
@@ -913,7 +915,7 @@ const Game = {
         
         window.addEventListener('keydown', (e) => {
             if (e.code === 'Enter' && (this.state === 'START' || this.state === 'GAMEOVER' || this.state === 'VICTORY')) {
-                AudioEngine.init();
+                try { AudioEngine.init(); } catch(_) {}
                 music.play().catch(e => console.log("Audio play prevented:", e));
                 this.startGame();
             }
@@ -932,7 +934,7 @@ const Game = {
         // Desktop click/tap to start
         this.canvas.addEventListener('click', () => {
             if (this.state === 'START' || this.state === 'GAMEOVER' || this.state === 'VICTORY') {
-                AudioEngine.init();
+                try { AudioEngine.init(); } catch(_) {}
                 music.play().catch(e => console.log("Audio play prevented:", e));
                 this.startGame();
             }
@@ -941,9 +943,9 @@ const Game = {
         // Mobile controls setup
         if (isMobile) {
             startTouch.style.display = 'block';
-            startTouch.addEventListener('touchstart', (e) => {
+            startTouch.addEventListener('touchend', (e) => {
                 e.preventDefault();
-                AudioEngine.init();
+                try { AudioEngine.init(); } catch(_) {}
                 music.play().catch(e => console.log("Audio play prevented:", e));
                 if (this.state === 'START' || this.state === 'GAMEOVER' || this.state === 'VICTORY') {
                     this.startGame();
