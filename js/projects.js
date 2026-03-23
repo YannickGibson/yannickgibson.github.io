@@ -37,7 +37,7 @@ const PROJECTS = [
     },
     {
         title: "Satellite Prediction",
-        description: "A satellite image prediction solution, winning first place in a competition.",
+        description: "A satellite image prediction solution, winning first place in a 2025 competition.",
         language: "Python",
         color: "#3572A5",
         repo: "unit2025",

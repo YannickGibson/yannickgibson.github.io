@@ -114,12 +114,7 @@
 
       .skip-hint.hidden { opacity: 0; transition: opacity 0.3s; }
 
-      /* Accessibility */
-      @media (prefers-reduced-motion: reduce) {
-        .split-top, .split-bottom, .split-line, .skip-hint { display: none !important; }
-        .intro-hidden { opacity: 1 !important; transform: none !important; }
-        .pill-nav.intro-hidden { opacity: 1 !important; transform: translateX(-50%) !important; }
-      }
+
     </style>
 </head>
 <body>
@@ -250,8 +245,6 @@
     <!-- ══════════ CINEMATIC SPLIT ANIMATION SCRIPT ══════════ -->
     <script>
     (function () {
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
       if (sessionStorage.getItem('intro-b-played')) {
         skipInstantly();
         return;

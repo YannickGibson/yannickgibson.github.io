@@ -16,10 +16,9 @@
         .touch-btn { pointer-events: auto; position: absolute; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: inherit; -webkit-tap-highlight-color: transparent; }
         #btn-bomb { bottom: 20px; right: 20px; width: 56px; height: 56px; background: rgba(255,0,0,0.35); border: 2px solid rgba(255,0,0,0.7); color: #ff4444; font-size: 11px; }
         #btn-flame { bottom: 20px; right: 86px; width: 56px; height: 56px; background: rgba(255,136,0,0.35); border: 2px solid rgba(255,136,0,0.7); color: #ff8800; font-size: 11px; }
-        #btn-focus { bottom: 20px; left: 20px; width: 56px; height: 56px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.5); color: #fff; font-size: 11px; }
         #btn-start-touch { pointer-events: auto; position: absolute; top: 70%; left: 50%; transform: translate(-50%, -50%); padding: 16px 40px; background: rgba(0,255,255,0.2); border: 2px solid #00ffff; color: #fff; font-size: 18px; font-weight: 700; border-radius: 8px; font-family: inherit; z-index: 30; }
         .touch-btn.active { filter: brightness(1.5); }
-        @media (hover: none) and (pointer: coarse) { #mobile-controls { display: block; } #btn-focus { display: none; } canvas { border: none; box-shadow: none; border-radius: 0; } #credits { display: none; } }
+        @media (hover: none) and (pointer: coarse) { #mobile-controls { display: block; } canvas { border: none; box-shadow: none; border-radius: 0; } #credits { display: none; } }
     </style>
 </head>
 <body>
@@ -29,7 +28,7 @@
     <button id="btn-start-touch" style="display:none;">TAP TO START</button>
     <div id="btn-bomb" class="touch-btn">BOMB</div>
     <div id="btn-flame" class="touch-btn">FIRE</div>
-    <div id="btn-focus" class="touch-btn">SLOW</div>
+
 </div>
 <script>
 /**
@@ -959,8 +958,6 @@ const Game = {
 
             const btnBomb = document.getElementById('btn-bomb');
             const btnFlame = document.getElementById('btn-flame');
-            const btnFocus = document.getElementById('btn-focus');
-
             btnBomb.addEventListener('touchstart', (e) => {
                 e.preventDefault(); e.stopPropagation();
                 btnBomb.classList.add('active');
@@ -979,13 +976,7 @@ const Game = {
             btnFlame.addEventListener('touchend', () => { btnFlame.classList.remove('active'); this.player.touchFlame = false; });
             btnFlame.addEventListener('touchcancel', () => { btnFlame.classList.remove('active'); this.player.touchFlame = false; });
 
-            btnFocus.addEventListener('touchstart', (e) => {
-                e.preventDefault(); e.stopPropagation();
-                btnFocus.classList.add('active');
-                this.player.touchFocus = true;
-            }, { passive: false });
-            btnFocus.addEventListener('touchend', () => { btnFocus.classList.remove('active'); this.player.touchFocus = false; });
-            btnFocus.addEventListener('touchcancel', () => { btnFocus.classList.remove('active'); this.player.touchFocus = false; });
+
         }
 
         requestAnimationFrame((t) => this.loop(t));
