@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap 5.3 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <!-- highlight.js dark theme -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <!-- KaTeX -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <!-- Site styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="assets/icons/favicon.ico">
+    <title>Yannick Daniel Gibson</title>
+
+    <!-- ══════════ OPTION D: Three-Phase Letter Rain ══════════ -->
+    <style>
+      /* ── Rain canvas: starts as opaque overlay, transitions to background ── */
+      #rain-canvas {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        pointer-events: none;
+        background: #0a0e1a;
+      }
+
+      /* ── D3: Elastic Slide-In ── */
+      .intro-hidden {
+        opacity: 0;
+        transform: translateX(-60px);
+      }
+
+      .intro-hidden-right {
+        opacity: 0;
+        transform: translateX(60px);
+      }
+
+      .intro-slide-left {
+        animation: slideFromLeft 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      }
+      @keyframes slideFromLeft {
+        0%   { opacity: 0; transform: translateX(-60px); }
+        100% { opacity: 1; transform: translateX(0); }
+      }
+
+      .intro-slide-right {
+        animation: slideFromRight 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      }
+      @keyframes slideFromRight {
+        0%   { opacity: 0; transform: translateX(60px); }
+        100% { opacity: 1; transform: translateX(0); }
+      }
+
+      .intro-reveal {
+        animation: slideFromLeft 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      }
+
+      /* Nav slide down */
+      .pill-nav.intro-hidden {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-25px);
+      }
+      .pill-nav.intro-nav-reveal {
+        animation: navSlideDown 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      }
+      @keyframes navSlideDown {
+        to { opacity: 1; transform: translateX(-50%) translateY(0); }
+      }
+
+      /* Skip hint */
+      .skip-hint {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 12px;
+        color: rgba(0, 210, 255, 0.35);
+        letter-spacing: 2px;
+        font-family: 'Courier New', monospace;
+        z-index: 10001;
+        pointer-events: none;
+        transition: opacity 0.5s;
+      }
+      .skip-hint.hidden { opacity: 0; }
+
+      /* Accessibility */
+      @media (prefers-reduced-motion: reduce) {
+        .skip-hint { display: none !important; }
+        .intro-hidden, .intro-hidden-right { opacity: 1 !important; transform: none !important; }
+        .pill-nav.intro-hidden { opacity: 1 !important; transform: translateX(-50%) !important; }
+      }
+    </style>
+</head>
+<body>
+    <!-- ══════════ LETTER-RAIN CANVAS ══════════ -->
+    <canvas id="rain-canvas"></canvas>
+    <div class="skip-hint" id="skip-hint">CLICK OR PRESS ANY KEY TO SKIP</div>
+    <div id="vignette"></div>
+    <div id="cursor-spotlight"></div>
+
+    <!-- Floating pill nav -->
+    <nav class="pill-nav intro-hidden">
+        <a href="#hero">Home</a>
+        <a href="#projects">Projects</a>
+        <a href="#games">Games</a>
+        <span class="pill-nav-divider"></span>
+        <a href="https://github.com/YannickGibson" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+            <i class="fab fa-github"></i>
+        </a>
+        <a href="https://www.linkedin.com/in/yannick-gibson" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+            <i class="fab fa-linkedin"></i>
+        </a>
+    </nav>
+
+    <!-- Hero -->
+    <section id="hero">
+        <div class="container">
+            <div class="row align-items-center hero-row">
+                <div class="col-lg-7 center verticalHorizonCenter animate-on-scroll">
+                    <h1 class="name-heading intro-hidden" id="hero-name"><b>Yannick Daniel Gibson</b></h1>
+                    <h2 class="mt-3 intro-hidden" id="hero-sub">Personal Portfolio</h2>
+                    <hr class="hero-divider intro-hidden" id="hero-hr">
+                    <a href="https://www.linkedin.com/in/yannick-gibson" target="_blank" rel="noopener noreferrer" class="contact-cta mt-4 intro-hidden" id="hero-cta1">
+                        <i class="fab fa-linkedin"></i> Contact Me!
+                    </a>
+                    <a href="#projects" class="cta-btn mt-3 intro-hidden" id="hero-cta2">
+                        <i class="fas fa-arrow-down"></i> Explore Projects
+                    </a>
+                </div>
+                <div class="col-lg-5 verticalHorizonCenter animate-on-scroll">
+                    <img class="hero-img intro-hidden-right" id="hero-img" src="assets/media/me.png" alt="Developer illustration">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Projects -->
+    <section id="projects">
+        <div class="container">
+            <h2 class="section-title animate-on-scroll">
+                <i class="fas fa-code"></i> Projects
+            </h2>
+            <p class="section-subtitle animate-on-scroll">Click a project to read its README — fetched live from GitHub.</p>
+            <div class="projects-grid" id="projects-grid"></div>
+        </div>
+    </section>
+
+    <!-- Games -->
+    <section id="games">
+        <div class="container">
+            <h2 class="section-title animate-on-scroll">
+                <i class="fas fa-gamepad"></i> Try my games on the web
+            </h2>
+            <div id="games-grid"></div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container center">
+            <a href="https://github.com/YannickGibson" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-github"></i>
+            </a>
+            <a href="https://www.linkedin.com/in/yannick-gibson" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-linkedin"></i>
+            </a>
+            <p>&copy; 2026 Yannick Daniel Gibson</p>
+        </div>
+    </footer>
+
+    <!-- README Modal -->
+    <div class="readme-modal" id="readmeModal">
+        <div class="readme-modal-backdrop"></div>
+        <div class="readme-modal-content">
+            <button class="readme-modal-close" aria-label="Close">&times;</button>
+            <div class="readme-modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Scripts (app.js replaced: particles removed, only cursor spotlight kept) -->
+    <script>
+    (function () {
+      var spot = document.getElementById('cursor-spotlight');
+      if (!spot) return;
+      document.addEventListener('mousemove', function (e) {
+        spot.style.opacity = '1';
+        spot.style.background =
+          'radial-gradient(circle 220px at ' + e.clientX + 'px ' + e.clientY + 'px, ' +
+          'rgba(0, 210, 255, 0.07) 0%, transparent 100%)';
+      });
+      document.addEventListener('mouseleave', function () {
+        spot.style.opacity = '0';
+      });
+    })();
+    </script>
+
+    <!-- ══════════ CLICK RIPPLE EFFECT ══════════ -->
+    <script>
+    (function () {
+      var style = document.createElement('style');
+      style.textContent =
+        '@keyframes click-ripple {' +
+        '  0%   { transform: translate(-50%,-50%) scale(0); opacity: 0.5; }' +
+        '  100% { transform: translate(-50%,-50%) scale(1); opacity: 0; }' +
+        '}' +
+        '.click-ripple {' +
+        '  position: fixed;' +
+        '  width: 300px; height: 300px;' +
+        '  border-radius: 50%;' +
+        '  pointer-events: none;' +
+        '  z-index: 1;' +
+        '  background: radial-gradient(circle, rgba(0,210,255,0.25) 0%, transparent 70%);' +
+        '  animation: click-ripple 0.6s ease-out forwards;' +
+        '}';
+      document.head.appendChild(style);
+
+      document.addEventListener('click', function (e) {
+        /* Don't ripple on interactive elements */
+        if (e.target.closest('a, button, input, textarea, select, nav, .readme-modal')) return;
+        var ripple = document.createElement('div');
+        ripple.className = 'click-ripple';
+        ripple.style.left = e.clientX + 'px';
+        ripple.style.top  = e.clientY + 'px';
+        document.body.appendChild(ripple);
+        ripple.addEventListener('animationend', function () { ripple.remove(); });
+      });
+    })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="js/projects.js"></script>
+    <script src="js/readme-loader.js"></script>
+    <script src="js/subapps.js"></script>
+    <script>
+        (function () {
+            var container = document.getElementById('games-grid');
+            if (!container || typeof SUBAPPS === 'undefined') return;
+            var isMobile = 'ontouchstart' in window && window.innerWidth <= 768;
+            SUBAPPS.forEach(function (app) {
+                if (isMobile && !app.mobile) return;
+                var card = document.createElement('a');
+                card.href = 'player.html?app=' + encodeURIComponent(app.path);
+                card.className = 'game-card animate-on-scroll';
+                card.innerHTML =
+                    (app.image ? '<img class="game-card-thumb" src="' + app.image + '" alt="' + app.title + '">' : '') +
+                    '<div class="game-card-body">' +
+                    '  <span class="game-card-title">' + app.title + '</span>' +
+                    '  <span class="game-card-desc">' + app.description + '</span>' +
+                    '  <span class="game-card-play"><i class="fas fa-play"></i> Play</span>' +
+                    '</div>';
+                container.appendChild(card);
+            });
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
+    <!-- ══════════ THREE-PHASE LETTER RAIN ══════════ -->
+    <script>
+    (function () {
+      /* ── Reduced-motion bail-out ───────────────────────── */
+      var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      var canvas = document.getElementById('rain-canvas');
+      if (!canvas) return;
+      var ctx  = canvas.getContext('2d');
+      var hint = document.getElementById('skip-hint');
+
+      /* ── Phase timing (ms) ─────────────────────────────── */
+      var T_FAST_END     = 1800;   /* fast rain ends            */
+      var T_DECEL_END    = 4800;   /* deceleration completes    */
+      var T_REVEAL_START = 3200;   /* content begins appearing  */
+
+      /* ── Visual tuning ─────────────────────────────────── */
+      var FONT_SIZE     = 15;
+      var SPEED_FAST    = 1.0 * FONT_SIZE;
+      var SPEED_AMBIENT = 0.12 * FONT_SIZE;
+      var LEAD_FAST     = 0.85;
+      var LEAD_AMBIENT  = 0.40;
+      var FADE_FAST     = 0.10;
+      var FADE_AMBIENT  = 0.09;
+
+      var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'.split('');
+
+      /* ── Canvas sizing ─────────────────────────────────── */
+      var dpr = window.devicePixelRatio || 1;
+      var w, h, columns;
+      var dropPos;
+
+      function resize() {
+        w = window.innerWidth;
+        h = window.innerHeight;
+        canvas.width  = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width  = w + 'px';
+        canvas.style.height = h + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        initColumns();
+      }
+
+      function initColumns() {
+        var n = Math.ceil(w / FONT_SIZE);
+        var old = dropPos || [];
+        dropPos = [];
+        for (var i = 0; i < n; i++) {
+          dropPos[i] = (i < old.length) ? old[i] : -Math.random() * h;
+        }
+        columns = n;
+      }
+
+      resize();
+      window.addEventListener('resize', resize);
+
+      /* ── Helpers ───────────────────────────────────────── */
+      function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+      function lerp(a, b, t) { return a + (b - a) * t; }
+      function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+      /* ── State ─────────────────────────────────────────── */
+      var startTime  = performance.now();
+      var revealed   = false;
+      var bgCleared  = false;
+      var skipped    = false;
+
+      /* ── Main draw loop ────────────────────────────────── */
+      function draw() {
+        var elapsed = performance.now() - startTime;
+
+        /* Eased progress through deceleration (0 → 1) */
+        var t     = clamp01((elapsed - T_FAST_END) / (T_DECEL_END - T_FAST_END));
+        var eased = easeOutCubic(t);
+
+        var curSpeed = lerp(SPEED_FAST, SPEED_AMBIENT, eased);
+        var curLead  = lerp(LEAD_FAST, LEAD_AMBIENT, eased);
+        var curFade  = lerp(FADE_FAST, FADE_AMBIENT, eased);
+
+        /* ─ Trail fade: keep original feel, add progressive scrub near ambient ─ */
+        var darkW  = 1 - eased;
+        var clearW = eased;
+        if (darkW > 0.001) {
+          ctx.fillStyle = 'rgba(15, 23, 42, ' + (curFade * darkW).toFixed(4) + ')';
+          ctx.fillRect(0, 0, w, h);
+        }
+        if (clearW > 0.001) {
+          ctx.save();
+          ctx.globalCompositeOperation = 'destination-out';
+          ctx.globalAlpha = curFade * clearW;
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, w, h);
+          ctx.restore();
+        }
+
+        /* Late-stage extra scrub evens out residual stripes without a hard visual switch */
+        var scrubT = clamp01((eased - 0.82) / 0.18);
+        if (scrubT > 0.001) {
+          ctx.save();
+          ctx.globalCompositeOperation = 'destination-out';
+          ctx.globalAlpha = 0.20 * scrubT;
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, w, h);
+          ctx.restore();
+        }
+
+        /* ─ Canvas CSS background: opaque → transparent ─ */
+        if (!bgCleared) {
+          var bgAlpha = 1 - eased;
+          if (bgAlpha > 0.001) {
+            canvas.style.background = 'rgba(10, 14, 26, ' + bgAlpha.toFixed(3) + ')';
+          } else {
+            canvas.style.background = 'transparent';
+            bgCleared = true;
+          }
+        }
+
+        /* ─ Draw rain columns ─ */
+        ctx.font = FONT_SIZE + 'px "Courier New", monospace';
+        var ambientT = clamp01((eased - 0.75) / 0.25);
+        var trailLen = Math.round(lerp(5, 10, ambientT));
+        var trailMul = lerp(0.35, 0.43, ambientT);
+        for (var i = 0; i < columns; i++) {
+          dropPos[i] += curSpeed;
+          var x = i * FONT_SIZE;
+          var y = dropPos[i];
+
+          if (y > -FONT_SIZE && y < h + FONT_SIZE) {
+            /* Lead character (brightest) */
+            ctx.fillStyle = 'rgba(0, 210, 255, ' + curLead.toFixed(3) + ')';
+            ctx.fillText(chars[Math.floor(Math.random() * chars.length)], x, y);
+
+            /* Extended trail behind the lead */
+            for (var j = 1; j <= trailLen; j++) {
+              var ty = y - j * FONT_SIZE;
+              if (ty > 0 && ty < h) {
+                var trailAlpha = curLead * (1 - j / (trailLen + 1)) * trailMul;
+                ctx.fillStyle = 'rgba(0, 210, 255, ' + trailAlpha.toFixed(4) + ')';
+                ctx.fillText(chars[Math.floor(Math.random() * chars.length)], x, ty);
+              }
+            }
+          }
+
+          if (y > h && Math.random() > 0.975) {
+            dropPos[i] = -Math.random() * FONT_SIZE * 5;
+          }
+        }
+
+        /* ─ Content reveal trigger ─ */
+        if (!revealed && elapsed > T_REVEAL_START) {
+          revealed = true;
+          if (hint) hint.classList.add('hidden');
+          revealHero();
+        }
+
+        requestAnimationFrame(draw);
+      }
+
+      /* ── Returning visitor → skip to ambient ───────────── */
+      if (reducedMotion || sessionStorage.getItem('intro-d-played')) {
+        showContentNow();
+        goAmbient();
+      }
+      requestAnimationFrame(draw);
+
+      /* ── Show content instantly (no animation) ─────────── */
+      function showContentNow() {
+        if (hint) hint.remove();
+        canvas.style.zIndex = '0';
+
+        var nav = document.querySelector('.pill-nav');
+        nav.classList.remove('intro-hidden');
+        nav.style.opacity = '1';
+        nav.style.transform = 'translateX(-50%)';
+
+        ['hero-name','hero-sub','hero-hr','hero-cta1','hero-cta2','hero-img'].forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) { el.classList.remove('intro-hidden'); el.classList.remove('intro-hidden-right'); el.style.opacity = '1'; el.style.transform = 'none'; }
+        });
+      }
+
+      /* ── Jump to ambient state ─────────────────────────── */
+      function goAmbient() {
+        startTime = performance.now() - T_DECEL_END - 1000;
+        canvas.style.background = 'transparent';
+        canvas.style.zIndex = '0';
+        bgCleared = true;
+        revealed  = true;
+        skipped   = true;
+        document.removeEventListener('click', skipAll);
+        document.removeEventListener('keydown', skipAll);
+        /* Scatter drops so ambient rain is already visible */
+        for (var i = 0; i < columns; i++) {
+          dropPos[i] = Math.random() * h;
+        }
+        sessionStorage.setItem('intro-d-played', '1');
+      }
+
+      /* ── D3: Elastic Slide-In reveal ─────────────────── */
+      function revealHero() {
+        document.removeEventListener('click', skipAll);
+        document.removeEventListener('keydown', skipAll);
+
+        /* Drop rain canvas behind content so characters don't overlay the image */
+        canvas.style.zIndex = '0';
+
+        /* Name slides from left */
+        var name = document.getElementById('hero-name');
+        if (name) { name.classList.remove('intro-hidden'); name.classList.add('intro-slide-left'); }
+
+        /* Image slides from right */
+        setTimeout(function () {
+          var img = document.getElementById('hero-img');
+          if (img) { img.classList.remove('intro-hidden-right'); img.classList.add('intro-slide-right'); }
+        }, 200);
+
+        /* Rest stagger from left */
+        var stagger = [
+          { id: 'hero-sub',  delay: 300 },
+          { id: 'hero-hr',   delay: 480 },
+          { id: 'hero-cta1', delay: 620 },
+          { id: 'hero-cta2', delay: 750 }
+        ];
+
+        stagger.forEach(function (item) {
+          setTimeout(function () {
+            var el = document.getElementById(item.id);
+            if (el) { el.classList.remove('intro-hidden'); el.classList.add('intro-reveal'); }
+          }, item.delay);
+        });
+
+        setTimeout(function () {
+          var nav = document.querySelector('.pill-nav');
+          if (nav) nav.classList.add('intro-nav-reveal');
+        }, 250);
+
+        sessionStorage.setItem('intro-d-played', '1');
+      }
+
+      /* ── Skip mechanism ────────────────────────────────── */
+      function skipAll() {
+        if (skipped) return;
+        skipped = true;
+        document.removeEventListener('click', skipAll);
+        document.removeEventListener('keydown', skipAll);
+        showContentNow();
+        goAmbient();
+      }
+
+      document.addEventListener('click', skipAll);
+      document.addEventListener('keydown', skipAll);
+    })();
+    </script>
+</body>
+</html>

@@ -942,6 +942,10 @@ const Game = {
 
         // Mobile controls setup
         if (isMobile) {
+            // Force mobile-controls visible via JS — some browsers (Brave Android)
+            // report hover:hover so the CSS media query doesn't trigger
+            var mc = document.getElementById('mobile-controls');
+            if (mc) mc.style.display = 'block';
             startTouch.style.display = 'block';
             startTouch.addEventListener('touchend', (e) => {
                 e.preventDefault();
