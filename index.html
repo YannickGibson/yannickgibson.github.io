@@ -91,7 +91,7 @@
 
       /* Accessibility */
       @media (prefers-reduced-motion: reduce) {
-        #rain-canvas, .skip-hint { display: none !important; }
+        .skip-hint { display: none !important; }
         .intro-hidden, .intro-hidden-right { opacity: 1 !important; transform: none !important; }
         .pill-nav.intro-hidden { opacity: 1 !important; transform: translateX(-50%) !important; }
       }
@@ -267,7 +267,7 @@
     <script>
     (function () {
       /* ── Reduced-motion bail-out ───────────────────────── */
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       var canvas = document.getElementById('rain-canvas');
       if (!canvas) return;
@@ -342,10 +342,9 @@
         var curLead  = lerp(LEAD_FAST, LEAD_AMBIENT, eased);
         var curFade  = lerp(FADE_FAST, FADE_AMBIENT, eased);
 
-        /* ─ Trail fade: cross-fade dark-fill ↔ destination-out ─ */
+        /* ─ Trail fade: keep original feel, add progressive scrub near ambient ─ */
         var darkW  = 1 - eased;
         var clearW = eased;
-
         if (darkW > 0.001) {
           ctx.fillStyle = 'rgba(15, 23, 42, ' + (curFade * darkW).toFixed(4) + ')';
           ctx.fillRect(0, 0, w, h);
@@ -354,6 +353,17 @@
           ctx.save();
           ctx.globalCompositeOperation = 'destination-out';
           ctx.globalAlpha = curFade * clearW;
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, w, h);
+          ctx.restore();
+        }
+
+        /* Late-stage extra scrub evens out residual stripes without a hard visual switch */
+        var scrubT = clamp01((eased - 0.82) / 0.18);
+        if (scrubT > 0.001) {
+          ctx.save();
+          ctx.globalCompositeOperation = 'destination-out';
+          ctx.globalAlpha = 0.20 * scrubT;
           ctx.fillStyle = '#000';
           ctx.fillRect(0, 0, w, h);
           ctx.restore();
@@ -371,7 +381,10 @@
         }
 
         /* ─ Draw rain columns ─ */
-        ctx.font = FONT_SIZE + 'px Courier New';
+        ctx.font = FONT_SIZE + 'px "Courier New", monospace';
+        var ambientT = clamp01((eased - 0.75) / 0.25);
+        var trailLen = Math.round(lerp(5, 10, ambientT));
+        var trailMul = lerp(0.35, 0.43, ambientT);
         for (var i = 0; i < columns; i++) {
           dropPos[i] += curSpeed;
           var x = i * FONT_SIZE;
@@ -383,11 +396,10 @@
             ctx.fillText(chars[Math.floor(Math.random() * chars.length)], x, y);
 
             /* Extended trail behind the lead */
-            var trailLen = 5;
             for (var j = 1; j <= trailLen; j++) {
               var ty = y - j * FONT_SIZE;
               if (ty > 0 && ty < h) {
-                var trailAlpha = curLead * (1 - j / (trailLen + 1)) * 0.35;
+                var trailAlpha = curLead * (1 - j / (trailLen + 1)) * trailMul;
                 ctx.fillStyle = 'rgba(0, 210, 255, ' + trailAlpha.toFixed(4) + ')';
                 ctx.fillText(chars[Math.floor(Math.random() * chars.length)], x, ty);
               }
@@ -410,7 +422,7 @@
       }
 
       /* ── Returning visitor → skip to ambient ───────────── */
-      if (sessionStorage.getItem('intro-d-played')) {
+      if (reducedMotion || sessionStorage.getItem('intro-d-played')) {
         showContentNow();
         goAmbient();
       }
