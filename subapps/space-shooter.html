@@ -19,7 +19,7 @@
         #btn-focus { bottom: 20px; left: 20px; width: 56px; height: 56px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.5); color: #fff; font-size: 11px; }
         #btn-start-touch { pointer-events: auto; position: absolute; top: 70%; left: 50%; transform: translate(-50%, -50%); padding: 16px 40px; background: rgba(0,255,255,0.2); border: 2px solid #00ffff; color: #fff; font-size: 18px; font-weight: 700; border-radius: 8px; font-family: inherit; z-index: 30; }
         .touch-btn.active { filter: brightness(1.5); }
-        @media (hover: none) and (pointer: coarse) { #mobile-controls { display: block; } canvas { border: none; box-shadow: none; border-radius: 0; } #credits { display: none; } }
+        @media (hover: none) and (pointer: coarse) { #mobile-controls { display: block; } #btn-focus { display: none; } canvas { border: none; box-shadow: none; border-radius: 0; } #credits { display: none; } }
     </style>
 </head>
 <body>
@@ -1337,7 +1337,6 @@ const Game = {
                 ctx.fillText('Drag to Move (auto-fire)', CONFIG.WIDTH/2, 350);
                 ctx.fillText('FIRE = Flamethrower', CONFIG.WIDTH/2, 380);
                 ctx.fillText('BOMB = Screen Clear', CONFIG.WIDTH/2, 410);
-                ctx.fillText('SLOW = Focus Mode', CONFIG.WIDTH/2, 440);
             } else {
                 ctx.fillText('[W A S D] Move', CONFIG.WIDTH/2, 330);
                 ctx.fillText('[Mouse] Aim Parry Shield', CONFIG.WIDTH/2, 360);
@@ -1347,9 +1346,9 @@ const Game = {
                 ctx.fillText('[Shift] Focus Mode (Slow + Hitbox)', CONFIG.WIDTH/2, 480);
             }
 
-            if (Math.floor(this.time * 2) % 2 === 0) {
+            if (!isMobile && Math.floor(this.time * 2) % 2 === 0) {
                 ctx.fillStyle = '#fff'; ctx.font = 'bold 24px "Segoe UI", sans-serif';
-                ctx.fillText(isMobile ? 'TAP TO START' : 'TAP OR PRESS ENTER TO START', CONFIG.WIDTH/2, 600);
+                ctx.fillText('TAP OR PRESS ENTER TO START', CONFIG.WIDTH/2, 600);
             }
             ctx.restore();
             return;
@@ -1482,9 +1481,9 @@ const Game = {
             ctx.fillText('SYSTEM FAILURE', CONFIG.WIDTH/2, CONFIG.HEIGHT/2 - 20);
             ctx.fillStyle = '#fff'; ctx.font = '20px "Segoe UI", sans-serif';
             ctx.fillText(`FINAL SCORE: ${Math.floor(this.player.score)}`, CONFIG.WIDTH/2, CONFIG.HEIGHT/2 + 30);
-            ctx.fillText(isMobile ? 'TAP TO RESTART' : 'TAP OR PRESS ENTER TO RESTART', CONFIG.WIDTH/2, CONFIG.HEIGHT/2 + 70);
+            if (!isMobile) ctx.fillText('TAP OR PRESS ENTER TO RESTART', CONFIG.WIDTH/2, CONFIG.HEIGHT/2 + 70);
             if (Input.keys['Enter']) this.startGame();
-            if (isMobile) { const btn = document.getElementById('btn-start-touch'); if (btn) btn.style.display = 'block'; }
+            if (isMobile) { const btn = document.getElementById('btn-start-touch'); if (btn) { btn.textContent = 'TAP TO RESTART'; btn.style.display = 'block'; } }
         }
 
         if (this.state === 'VICTORY') {
@@ -1502,9 +1501,9 @@ const Game = {
             ctx.fillText(`RANK: ${rank}`, CONFIG.WIDTH/2, CONFIG.HEIGHT/2 + 80);
             
             ctx.fillStyle = '#fff'; ctx.font = '20px "Segoe UI", sans-serif';
-            ctx.fillText(isMobile ? 'TAP TO RESTART' : 'TAP OR PRESS ENTER TO RESTART', CONFIG.WIDTH/2, CONFIG.HEIGHT/2 + 130);
+            if (!isMobile) ctx.fillText('TAP OR PRESS ENTER TO RESTART', CONFIG.WIDTH/2, CONFIG.HEIGHT/2 + 130);
             if (Input.keys['Enter']) this.startGame();
-            if (isMobile) { const btn = document.getElementById('btn-start-touch'); if (btn) btn.style.display = 'block'; }
+            if (isMobile) { const btn = document.getElementById('btn-start-touch'); if (btn) { btn.textContent = 'TAP TO RESTART'; btn.style.display = 'block'; } }
         }
 
         if (this.state === 'PAUSED') {
