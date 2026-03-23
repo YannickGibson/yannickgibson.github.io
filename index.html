@@ -250,6 +250,8 @@
         return;
       }
 
+      document.documentElement.style.overflow = 'hidden';
+
       var splitTop  = document.getElementById('split-top');
       var splitBot  = document.getElementById('split-bottom');
       var line      = document.getElementById('split-line');
@@ -268,6 +270,7 @@
       document.addEventListener('keydown', skipAll, { once: true });
 
       function skipInstantly() {
+        document.documentElement.style.overflow = '';
         ['split-top','split-bottom','split-line','skip-hint'].forEach(function (id) {
           var el = document.getElementById(id);
           if (el) el.remove();
@@ -320,6 +323,7 @@
         splitBot.remove();
         line.remove();
         if (hint) hint.remove();
+        document.documentElement.style.overflow = '';
 
         /* Name with smooth reveal */
         var name = document.getElementById('hero-name');
