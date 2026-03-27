@@ -17,6 +17,7 @@ const PROJECTS = [
         repo: "HackJakBrno25",
         owner: "ElNiborus",
         imageIndex: 2,
+        thumbnailZoom: 100,
         tags: ["Semantic Search", "FastAPI", "React.js"]
     },
     {
@@ -25,6 +26,7 @@ const PROJECTS = [
         language: "Python",
         color: "#3572A5",
         repo: "bachelors_thesis",
+        thumbnailZoom: 100,
         tags: ["PyTorch", "OpenCV", "YOLO"]
     },
     {
@@ -33,6 +35,7 @@ const PROJECTS = [
         language: "Python",
         color: "#3572A5",
         repo: "ai_navigation",
+        thumbnailZoom: 120,
         tags: ["Pygame", "NumPy", "NEAT"]
     },
     {
@@ -59,6 +62,7 @@ const PROJECTS = [
         language: "Python",
         color: "#3572A5",
         repo: "smasher",
+        thumbnailZoom: 120,
         tags: ["Sockets", "Flask"]
     },
     {
@@ -67,6 +71,7 @@ const PROJECTS = [
         language: "JavaScript",
         color: "#f1e05a",
         repo: "yannickgibson.github.io",
+        thumbnailZoom: 100,
         tags: ["Canvas", "Web Audio", "HTML5 Games"]
     },
     {
@@ -75,6 +80,7 @@ const PROJECTS = [
         language: "Python",
         color: "#3572A5",
         repo: "ai-hackathon-template",
+        thumbnailZoom: 100,
         tags: ["FastAPI", "Docker", "Template"]
     },
 ];

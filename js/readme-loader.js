@@ -202,6 +202,7 @@
     // ── Thumbnail: populate the thumbnail element ─────────────────────
     function loadThumbnail(thumbEl, media) {
         thumbEl.innerHTML = '';
+        thumbEl.style.removeProperty('--thumb-bg');
         if (!media) {
             thumbEl.innerHTML = '<div class="thumb-empty"><i class="fas fa-code"></i></div>';
             return;
@@ -212,6 +213,9 @@
             img.src = media.url;
             img.alt = 'Project thumbnail';
             img.loading = 'lazy';
+            img.addEventListener('load', function () {
+                thumbEl.style.setProperty('--thumb-bg', 'url(\'' + media.url + '\')');
+            });
             img.addEventListener('error', function () {
                 thumbEl.innerHTML = '<div class="thumb-empty"><i class="fas fa-code"></i></div>';
             });
@@ -329,6 +333,13 @@
             var repoUrl = 'https://github.com/' +
                 encodeURIComponent(owner) + '/' +
                 encodeURIComponent(project.repo);
+
+            if (project.thumbnailZoom) {
+                tile.style.setProperty('--thumb-zoom', project.thumbnailZoom + '%');
+                tile.style.setProperty('--thumb-max-w', 'none');
+                tile.style.setProperty('--thumb-max-h', 'none');
+                tile.style.setProperty('--thumb-fit', 'cover');
+            }
 
             tile.innerHTML =
                 '<div class="tile-thumb" id="thumb-' + i + '">' +

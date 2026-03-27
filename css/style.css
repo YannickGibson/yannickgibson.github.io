@@ -347,11 +347,26 @@ p {
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+/* Blurred zoomed background fill behind the foreground image */
+.tile-thumb::before {
+  content: '';
+  position: absolute;
+  inset: -30px;
+  background: var(--thumb-bg) center / cover no-repeat;
+  filter: blur(20px) brightness(0.75);
+  z-index: 0;
+  pointer-events: none;
+}
+
 .tile-thumb img,
 .tile-thumb video {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
+  position: relative;
+  z-index: 1;
+  width: var(--thumb-zoom, auto);
+  height: var(--thumb-zoom, auto);
+  max-width: var(--thumb-max-w, 100%);
+  max-height: var(--thumb-max-h, 100%);
+  object-fit: var(--thumb-fit, contain);
   display: block;
 }
 
