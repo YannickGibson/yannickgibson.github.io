@@ -984,9 +984,12 @@ const Game = {
 
     resize() {
         if (isMobile) {
-            // On mobile, fill the entire screen
+            // On mobile, scale to fill width and adjust internal height
+            // to match the viewport aspect ratio (no distortion)
             const vw = window.innerWidth;
             const vh = window.innerHeight;
+            const scale = vw / CONFIG.WIDTH;
+            CONFIG.HEIGHT = Math.max(800, Math.round(vh / scale));
             this.canvas.width = CONFIG.WIDTH;
             this.canvas.height = CONFIG.HEIGHT;
             this.canvas.style.width = `${vw}px`;
