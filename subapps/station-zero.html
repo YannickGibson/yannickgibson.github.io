@@ -519,7 +519,12 @@
             ctx.save(); ctx.translate(player.x, player.y); ctx.rotate(player.angle);
             ctx.strokeStyle = '#0f0'; ctx.lineWidth = 3; ctx.strokeRect(-15, -15, 30, 30);
             ctx.fillStyle = '#fff'; ctx.fillRect(15, -3, 15, 6); ctx.restore(); ctx.restore();
-            const target = extraction || (enemies.length > 0 ? enemies[0] : null);
+            let closest = null, closestDist = Infinity;
+            for (let i = 0; i < enemies.length; i++) {
+                const d = Math.hypot(enemies[i].x - player.x, enemies[i].y - player.y);
+                if (d < closestDist) { closestDist = d; closest = enemies[i]; }
+            }
+            const target = extraction || closest;
             if (target) {
                 const ang = Math.atan2(target.y - player.y, target.x - player.x);
                 ctx.save(); ctx.translate(canvas.width/2, canvas.height/2); ctx.rotate(ang);
