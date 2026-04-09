@@ -116,12 +116,25 @@ window.addEventListener('keydown',e=>{
   keys[e.code]=true;
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
   if(bossPromptVisible){
+    if(e.repeat||performance.now()-bossPromptTime<800) return;
     if(e.code==='ArrowLeft'||e.code==='KeyA')  promptChoice=0;
     if(e.code==='ArrowRight'||e.code==='KeyD') promptChoice=1;
     if(e.code==='Enter'||e.code==='Space'){
       if(promptChoice===0) enterSecretBoss(); else skipSecretBoss();
     }
     if(e.code==='Delete') enterSecretBoss();
+    return;
+  }
+  if(STATE==='title'){
+    if(e.code==='ArrowLeft'||e.code==='KeyA'){
+      const i=CLASS_KEYS.indexOf(selectedClass);
+      selectedClass=CLASS_KEYS[(i-1+CLASS_KEYS.length)%CLASS_KEYS.length];
+    }
+    if(e.code==='ArrowRight'||e.code==='KeyD'){
+      const i=CLASS_KEYS.indexOf(selectedClass);
+      selectedClass=CLASS_KEYS[(i+1)%CLASS_KEYS.length];
+    }
+    if(e.code==='Enter'||e.code==='Space') startGame();
     return;
   }
   if(e.code==='Delete' && STATE==='playing') goNextRoom();
@@ -246,6 +259,7 @@ const ROOMS=[
 // ── SECRET BOSS PROMPT STATE ──
 let STATE_PREV='playing';
 let bossPromptVisible=false;
+let bossPromptTime=0;
 let promptChoice=0; // 0=enter, 1=leave
 
 let roomIdx=0,roomEnemies=[],roomObs=[],roomTorches=[];
@@ -1820,6 +1834,7 @@ function goNextRoom(){
   // Room 6 (index 6) is the secret boss — show prompt first
   if(ROOMS[next].secret){
     bossPromptVisible=true;
+    bossPromptTime=performance.now();
     promptChoice=0;
     return;
   }
